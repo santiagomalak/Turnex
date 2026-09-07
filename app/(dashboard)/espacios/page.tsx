@@ -27,7 +27,7 @@ const estadosOptions = [
 const initialForm = {
   nombre: '',
   tipo: 'futbol' as TipoEspacio,
-  precioPorHora: 0,
+  precioPorHora: '0',
   estado: 'activa' as EstadoEspacio,
 };
 
@@ -54,7 +54,8 @@ export default function EspaciosPage() {
   const validate = (data: typeof formData) => {
     const newErrors: Partial<typeof formData> = {};
     if (!data.nombre.trim()) newErrors.nombre = 'Nombre requerido';
-    if (data.precioPorHora <= 0) newErrors.precioPorHora = 'Precio debe ser mayor a 0';
+    const precio = Number(data.precioPorHora);
+    if (isNaN(precio) || precio <= 0) newErrors.precioPorHora = 'Precio debe ser mayor a 0';
     return newErrors;
   };
 
@@ -64,14 +65,15 @@ export default function EspaciosPage() {
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
     setSubmitting(true);
     try {
-      if (editingEspacio) store.updateEspacio(editingEspacio.id, formData);
-      else store.addEspacio(formData);
+      const data = { ...formData, precioPorHora: Number(formData.precioPorHora) };
+      if (editingEspacio) store.updateEspacio(editingEspacio.id, data);
+      else store.addEspacio(data);
       refresh(); closeModal();
     } finally { setSubmitting(false); }
   };
 
   const openModal = (espacio?: Espacio) => {
-    if (espacio) { setEditingEspacio(espacio); setFormData({ ...espacio }); }
+    if (espacio) { setEditingEspacio(espacio); setFormData({ ...espacio, precioPorHora: String(espacio.precioPorHora) }); }
     else { setEditingEspacio(null); setFormData(initialForm); }
     setErrors({}); setIsModalOpen(true);
   };
@@ -81,7 +83,7 @@ export default function EspaciosPage() {
   const handleDelete = (id: string) => { if (confirm('¿Eliminar esta cancha? Se borrarán sus reservas.')) { store.deleteEspacio(id); refresh(); } };
 
   const getTipoBadge = (tipo: TipoEspacio) => {
-    const variants: Record<TipoEspacio, 'default' | 'success' | 'info' | 'warning'> = { futbol: 'success', padel: 'info', tenis: 'warning', voley: 'default', otro: 'neutral' };
+    const variants: Record<TipoEspacio, 'default' | 'success' | 'info' | 'warning'> = { futbol: 'success', padel: 'info', tenis: 'warning', voley: 'default', otro: 'default' };
     return <Badge variant={variants[tipo]}>{tipo}</Badge>;
   };
 
@@ -117,7 +119,7 @@ export default function EspaciosPage() {
         <Button onClick={() => openModal()}>Nuevo Espacio</Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'lista' | 'calendario')} className="w-full">
         <TabsList>
           <TabsTrigger value="lista">Lista</TabsTrigger>
           <TabsTrigger value="calendario">Calendario Semanal</TabsTrigger>
@@ -136,11 +138,11 @@ export default function EspaciosPage() {
             <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <CardTitle>Disponibilidad Semanal</CardTitle>
               <div className="flex items-center gap-4">
-                <Button variant="outline" size="sm" onClick={() => setWeekStart(addDays(weekStart, -7))}>< Semana anterior</Button>
+                <Button variant="outline" size="sm" onClick={() => setWeekStart(addDays(weekStart, -7))}>&#60; Semana anterior</Button>
                 <span className="font-medium text-zinc-900 dark:text-white">
                   {weekDays[0].toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })} - {weekDays[6].toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </span>
-                <Button variant="outline" size="sm" onClick={() => setWeekStart(addDays(weekStart, 7))}>Semana siguiente ></Button>
+                <Button variant="outline" size="sm" onClick={() => setWeekStart(addDays(weekStart, 7))}>Semana siguiente &#62;</Button>
                 <Button variant="secondary" size="sm" onClick={() => { const d = new Date(); d.setDate(d.getDate() - d.getDay()); setWeekStart(d); }}>Hoy</Button>
               </div>
             </CardHeader>
@@ -207,7 +209,7 @@ export default function EspaciosPage() {
           <Input label="Nombre *" value={formData.nombre} onChange={e => setFormData({ ...formData, nombre: e.target.value })} error={errors.nombre} placeholder="Cancha Fútbol 1" required />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select label="Tipo *" value={formData.tipo} onChange={e => setFormData({ ...formData, tipo: e.target.value as TipoEspacio })} options={tiposOptions} placeholder="Seleccionar tipo" />
-            <Input label="Precio por hora *" type="number" min="0" step="100" value={formData.precioPorHora} onChange={e => setFormData({ ...formData, precioPorHora: Number(e.target.value) })} error={errors.precioPorHora} placeholder="8000" required />
+            <Input label="Precio por hora *" type="number" min="0" step="100" value={formData.precioPorHora} onChange={e => setFormData({ ...formData, precioPorHora: e.target.value })} error={errors.precioPorHora} placeholder="8000" required />
           </div>
           <Select label="Estado *" value={formData.estado} onChange={e => setFormData({ ...formData, estado: e.target.value as EstadoEspacio })} options={estadosOptions} placeholder="Seleccionar estado" />
           <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">

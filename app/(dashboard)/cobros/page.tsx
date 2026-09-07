@@ -29,7 +29,7 @@ const tiposOptions = [
 const initialForm = {
   personaId: '',
   tipo: 'cuota' as TipoMovimiento,
-  monto: 0,
+  monto: '0',
   medioPago: 'efectivo' as MedioPago,
   cuotaId: '',
   reservaId: '',
@@ -61,7 +61,8 @@ export default function CobrosPage() {
   const validate = (data: typeof formData) => {
     const newErrors: Partial<typeof formData> = {};
     if (!data.personaId) newErrors.personaId = 'Seleccionar persona';
-    if (data.monto <= 0) newErrors.monto = 'Monto debe ser mayor a 0';
+    const monto = Number(data.monto);
+    if (isNaN(monto) || monto <= 0) newErrors.monto = 'Monto debe ser mayor a 0';
     if (data.tipo === 'cuota' && !data.cuotaId) newErrors.cuotaId = 'Seleccionar cuota a pagar';
     if (data.tipo === 'alquiler' && !data.reservaId) newErrors.reservaId = 'Seleccionar reserva';
     return newErrors;
@@ -90,6 +91,7 @@ export default function CobrosPage() {
     try {
       const movimientoData = {
         ...formData,
+        monto: Number(formData.monto),
         registradoPor: store.getUsuariosStaff()[0]?.id || 'system',
         fecha: new Date().toISOString(),
       };
@@ -105,7 +107,7 @@ export default function CobrosPage() {
   };
 
   const openModal = (movimiento?: Movimiento) => {
-    if (movimiento) { setEditingMovimiento(movimiento); setFormData({ ...movimiento }); }
+    if (movimiento) { setEditingMovimiento(movimiento); setFormData({ ...movimiento, monto: String(movimiento.monto), cuotaId: movimiento.cuotaId || '', reservaId: movimiento.reservaId || '', comprobanteUrl: movimiento.comprobanteUrl || '' }); }
     else { setEditingMovimiento(null); setFormData(initialForm); setSelectedPersona(null); }
     setErrors({}); setIsModalOpen(true);
   };
@@ -117,7 +119,7 @@ export default function CobrosPage() {
     return <Badge variant={variants[tipo]}>{tipo}</Badge>;
   };
 
-  const getMedioBadge = (medio: MedioPago) => <Badge variant="neutral">{medio}</Badge>;
+  const getMedioBadge = (medio: MedioPago) => <Badge variant="default">{medio}</Badge>;
 
   const columnsHistorial = [
     { key: 'fecha', header: 'Fecha', render: (m: Movimiento) => m.fecha.split('T')[0] },
@@ -135,7 +137,7 @@ export default function CobrosPage() {
     { key: 'estado', header: 'Estado', render: (c: Cuota) => <Badge variant={c.estado === 'pagada' ? 'success' : c.estado === 'vencida' ? 'danger' : 'warning'}>{c.estado}</Badge> },
     { key: 'vencimiento', header: 'Vence', render: (c: Cuota) => c.fechaVencimiento },
     { key: 'actions', header: 'Acciones', render: (c: Cuota) => (
-        <Button size="sm" variant="primary" onClick={(e) => { e.stopPropagation(); setFormData({ ...initialForm, personaId: c.personaId, tipo: 'cuota', monto: c.monto, cuotaId: c.id }); setSelectedPersona(store.getPersona(c.personaId) || null); openModal(); }}>Cobrar</Button>
+        <Button size="sm" variant="primary" onClick={(e) => { e.stopPropagation(); setFormData({ ...initialForm, personaId: c.personaId, tipo: 'cuota', monto: String(c.monto), cuotaId: c.id }); setSelectedPersona(store.getPersona(c.personaId) || null); openModal(); }}>Cobrar</Button>
       ) },
   ];
 
@@ -148,7 +150,7 @@ export default function CobrosPage() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'registrar' | 'historial' | 'cuotas')}>
         <TabsList>
           <TabsTrigger value="registrar">Registrar Cobro</TabsTrigger>
           <TabsTrigger value="historial">Historial</TabsTrigger>
@@ -164,14 +166,14 @@ export default function CobrosPage() {
                 <Select label="Medio de pago *" value={formData.medioPago} onChange={e => setFormData({ ...formData, medioPago: e.target.value as MedioPago })} options={mediosOptions} placeholder="Seleccionar medio" required />
               </div>
 
-              <Input label="Monto *" type="number" min="0" step="100" value={formData.monto} onChange={e => setFormData({ ...formData, monto: Number(e.target.value) })} error={errors.monto} required />
+              <Input label="Monto *" type="number" min="0" step="100" value={formData.monto} onChange={e => setFormData({ ...formData, monto: e.target.value })} error={errors.monto} required />
 
               {formData.tipo === 'cuota' && selectedPersona && (
-                <Select label="Cuota a pagar" value={formData.cuotaId} onChange={e => setFormData({ ...formData, cuotaId: e.target.value, monto: cuotas.find(c => c.id === e.target.value)?.monto || 0 })} options={cuotas.filter(c => c.personaId === selectedPersona.id).map(c => ({ value: c.id, label: `${c.periodo.slice(0,7)} - ${formatCurrency(c.monto)} (${c.estado})` }))} placeholder="Seleccionar cuota pendiente" required />
+                <Select label="Cuota a pagar" value={formData.cuotaId} onChange={e => setFormData({ ...formData, cuotaId: e.target.value, monto: String(cuotas.find(c => c.id === e.target.value)?.monto || 0) })} options={cuotas.filter(c => c.personaId === selectedPersona.id).map(c => ({ value: c.id, label: `${c.periodo.slice(0,7)} - ${formatCurrency(c.monto)} (${c.estado})` }))} placeholder="Seleccionar cuota pendiente" required />
               )}
 
               {formData.tipo === 'alquiler' && selectedPersona && (
-                <Select label="Reserva a pagar" value={formData.reservaId} onChange={e => setFormData({ ...formData, reservaId: e.target.value, monto: store.getReserva(e.target.value)?.precio || 0 })} options={store.getReservas({ personaId: selectedPersona.id }).filter(r => r.estado === 'pendiente_pago').map(r => ({ value: r.id, label: `${store.getEspacio(r.espacioId)?.nombre} ${r.fecha} ${r.horaInicio}-${r.horaFin} - ${formatCurrency(r.precio)}` }))} placeholder="Seleccionar reserva pendiente" required />
+                <Select label="Reserva a pagar" value={formData.reservaId} onChange={e => setFormData({ ...formData, reservaId: e.target.value, monto: String(store.getReserva(e.target.value)?.precio || 0) })} options={store.getReservas({ personaId: selectedPersona.id }).filter(r => r.estado === 'pendiente_pago').map(r => ({ value: r.id, label: `${store.getEspacio(r.espacioId)?.nombre} ${r.fecha} ${r.horaInicio}-${r.horaFin} - ${formatCurrency(r.precio)}` }))} placeholder="Seleccionar reserva pendiente" required />
               )}
 
               <Input label="Comprobante (URL opcional)" value={formData.comprobanteUrl} onChange={e => setFormData({ ...formData, comprobanteUrl: e.target.value })} placeholder="https://..." />
@@ -181,7 +183,7 @@ export default function CobrosPage() {
                   <p className="font-medium">{selectedPersona.nombre} {selectedPersona.apellido}</p>
                   <p className="text-sm text-zinc-500">DNI: {selectedPersona.dni} · {selectedPersona.email}</p>
                   <div className="mt-2 flex gap-2">
-                    <Badge variant={selectedPersona.estado === 'activo' ? 'success' : selectedPersona.estado === 'moroso' ? 'danger' : 'neutral'}>{selectedPersona.estado}</Badge>
+                    <Badge variant={selectedPersona.estado === 'activo' ? 'success' : selectedPersona.estado === 'moroso' ? 'danger' : 'default'}>{selectedPersona.estado}</Badge>
                     {selectedPersona.planMembresiaId && <Badge variant="info">{store.planes.find(pl => pl.id === selectedPersona.planMembresiaId)?.nombre}</Badge>}
                   </div>
                 </div>
@@ -189,7 +191,7 @@ export default function CobrosPage() {
 
               <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
                 <Button type="button" variant="secondary" onClick={closeModal}>Cancelar</Button>
-                <Button onClick={() => handleSubmit(new Event('submit'))} loading={submitting}>Registrar cobro</Button>
+                <Button onClick={(e) => handleSubmit(e as unknown as FormEvent)} loading={submitting}>Registrar cobro</Button>
               </div>
             </CardContent>
           </Card>
@@ -200,8 +202,8 @@ export default function CobrosPage() {
             <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <CardTitle>Historial de Movimientos</CardTitle>
               <div className="flex gap-2">
-                <Select value={filterPersonaId} onChange={e => { setFilterPersonaId(e.target.value); refresh(); }} options={[{ value: '', label: 'Todas las personas' }, ...personas.map(p => ({ value: p.id, label: `${p.nombre} ${p.apellido}` }))]} placeholder="Filtrar persona" className="w-56" />
-                <Select value={filterTipo} onChange={e => { setFilterTipo(e.target.value as any); refresh(); }} options={[{ value: '', label: 'Todos los tipos' }, ...tiposOptions]} placeholder="Filtrar tipo" className="w-48" />
+                <Select value={filterPersonaId} onChange={(e) => { setFilterPersonaId(e.target.value); refresh(); }} options={[{ value: '', label: 'Todas las personas' }, ...personas.map(p => ({ value: p.id, label: `${p.nombre} ${p.apellido}` }))]} placeholder="Filtrar persona" className="w-56" />
+                <Select value={filterTipo} onChange={(e) => { setFilterTipo(e.target.value as TipoMovimiento | ''); refresh(); }} options={[{ value: '', label: 'Todos los tipos' }, ...tiposOptions]} placeholder="Filtrar tipo" className="w-48" />
               </div>
             </CardHeader>
             <CardContent>

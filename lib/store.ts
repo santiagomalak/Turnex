@@ -1,5 +1,26 @@
 'use client';
 
+export type {
+  Persona,
+  PlanMembresia,
+  Espacio,
+  Reserva,
+  Cuota,
+  Movimiento,
+  AccesoLog,
+  UsuarioStaff,
+  Alerta,
+  RolPersona,
+  EstadoPersona,
+  TipoEspacio,
+  EstadoEspacio,
+  EstadoReserva,
+  EstadoCuota,
+  TipoMovimiento,
+  MedioPago,
+  RolStaff,
+} from './types';
+
 import type {
   Persona,
   PlanMembresia,

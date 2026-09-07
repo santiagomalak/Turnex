@@ -83,7 +83,7 @@ export default function AccesosPage() {
         </div>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'checkin' | 'log')}>
         <TabsList>
           <TabsTrigger value="checkin">Check-in / Check-out</TabsTrigger>
           <TabsTrigger value="log">Log de Accesos</TabsTrigger>

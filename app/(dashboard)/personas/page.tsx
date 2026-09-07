@@ -79,7 +79,7 @@ export default function PersonasPage() {
           setSubmitting(false);
           return;
         }
-        store.addPersona(formData);
+        store.addPersona({ ...formData, fechaAlta: new Date().toISOString() });
       }
       refresh();
       closeModal();

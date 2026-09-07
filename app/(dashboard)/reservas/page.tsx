@@ -25,7 +25,7 @@ const initialForm = {
   horaInicio: '10:00',
   horaFin: '11:00',
   estado: 'pendiente_pago' as EstadoReserva,
-  precio: 0,
+  precio: '0',
   senaPagada: false,
 };
 
@@ -57,7 +57,8 @@ export default function ReservasPage() {
     if (!data.fecha) newErrors.fecha = 'Fecha requerida';
     if (!data.horaInicio || !data.horaFin) newErrors.horaInicio = 'Horario requerido';
     if (data.horaInicio >= data.horaFin) newErrors.horaFin = 'Hora fin debe ser posterior a hora inicio';
-    if (data.precio <= 0) newErrors.precio = 'Precio inválido';
+    const precio = Number(data.precio);
+    if (isNaN(precio) || precio <= 0) newErrors.precio = 'Precio inválido';
     return newErrors;
   };
 
@@ -76,19 +77,20 @@ export default function ReservasPage() {
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
     setSubmitting(true);
     try {
-      if (editingReserva) store.updateReserva(editingReserva.id, formData);
-      else store.addReserva(formData);
+      const data = { ...formData, precio: Number(formData.precio) };
+      if (editingReserva) store.updateReserva(editingReserva.id, data);
+      else store.addReserva(data);
       refresh(); closeModal();
     } catch (err) { setErrors({ horaInicio: (err as Error).message }); }
     finally { setSubmitting(false); }
   };
 
   const openModal = (reserva?: Reserva) => {
-    if (reserva) { setEditingReserva(reserva); setFormData({ ...reserva }); }
+    if (reserva) { setEditingReserva(reserva); setFormData({ ...reserva, precio: String(reserva.precio) }); }
     else { 
       setEditingReserva(null); 
       const espacio = espacios[0];
-      setFormData({ ...initialForm, espacioId: espacio?.id || '', precio: espacio?.precioPorHora || 0 });
+      setFormData({ ...initialForm, espacioId: espacio?.id || '', precio: String(espacio?.precioPorHora || 0) });
     }
     setErrors({}); setShowConflicts([]); setIsModalOpen(true);
   };
@@ -104,7 +106,7 @@ export default function ReservasPage() {
 
   const handleEspacioChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const espacio = espacios.find(es => es.id === e.target.value);
-    setFormData({ ...formData, espacioId: e.target.value, precio: espacio?.precioPorHora || 0 });
+    setFormData({ ...formData, espacioId: e.target.value, precio: String(espacio?.precioPorHora || 0) });
   };
 
   const columns = [
@@ -180,7 +182,7 @@ export default function ReservasPage() {
             <Select label="Hora fin *" value={formData.horaFin} onChange={e => setFormData({ ...formData, horaFin: e.target.value })} options={HORARIOS.slice(1).map(h => ({ value: h, label: h }))} placeholder="Hora fin" required />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input label="Precio *" type="number" min="0" step="100" value={formData.precio} onChange={e => setFormData({ ...formData, precio: Number(e.target.value) })} error={errors.precio} required />
+            <Input label="Precio *" type="number" min="0" step="100" value={formData.precio} onChange={e => setFormData({ ...formData, precio: e.target.value })} error={errors.precio} required />
             <Select label="Estado *" value={formData.estado} onChange={e => setFormData({ ...formData, estado: e.target.value as EstadoReserva })} options={estadosOptions} placeholder="Estado" required />
             <div className="flex items-end">
               <label className="flex items-center gap-2 cursor-pointer">
