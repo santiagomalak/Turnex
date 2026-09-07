@@ -1,7 +1,8 @@
 -- Up Migration
 
--- Extensión para UUIDs
+-- Extensiones
 create extension if not exists "pgcrypto";
+create extension if not exists "btree_gist";
 
 -- Personas: socios, invitados, staff, profesores
 create table persona (

@@ -1,15 +1,16 @@
-'use client';
+'use client'
 
-import { useState, useEffect, FormEvent } from 'react';
-import { store, type Espacio, type TipoEspacio, type EstadoEspacio } from '@/lib/store';
-import { Table } from '@/components/ui/Table';
-import { Modal } from '@/components/ui/Modal';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Badge } from '@/components/ui/Badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs';
+import { useState, useEffect, FormEvent } from 'react'
+import { store } from '@/lib/store-supabase'
+import { Table } from '@/components/ui/Table'
+import { Modal } from '@/components/ui/Modal'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
+import { Badge } from '@/components/ui/Badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
+import type { Espacio, TipoEspacio, EstadoEspacio, Reserva } from '@/lib/types-supabase'
 
 const tiposOptions = [
   { value: 'futbol', label: 'Fútbol' },
@@ -17,82 +18,92 @@ const tiposOptions = [
   { value: 'tenis', label: 'Tenis' },
   { value: 'voley', label: 'Vóley' },
   { value: 'otro', label: 'Otro' },
-];
+]
 
 const estadosOptions = [
   { value: 'activa', label: 'Activa' },
   { value: 'mantenimiento', label: 'Mantenimiento' },
-];
+]
 
 const initialForm = {
   nombre: '',
   tipo: 'futbol' as TipoEspacio,
   precioPorHora: '0',
   estado: 'activa' as EstadoEspacio,
-};
+}
 
-const HORARIOS = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00'];
-const DIAS_SEMANA = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const HORARIOS = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00', '22:00']
+const DIAS_SEMANA = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
 
-function formatDate(date: Date) { return date.toISOString().split('T')[0]; }
-function addDays(date: Date, days: number) { const d = new Date(date); d.setDate(d.getDate() + days); return d; }
+function formatDate(date: Date) { return date.toISOString().split('T')[0] }
+function addDays(date: Date, days: number) { const d = new Date(date); d.setDate(d.getDate() + days); return d }
 
 export default function EspaciosPage() {
-  const [espacios, setEspacios] = useState<Espacio[]>([]);
-  const [activeTab, setActiveTab] = useState<'lista' | 'calendario'>('lista');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingEspacio, setEditingEspacio] = useState<Espacio | null>(null);
-  const [formData, setFormData] = useState(initialForm);
-  const [errors, setErrors] = useState<Partial<typeof initialForm>>({});
-  const [submitting, setSubmitting] = useState(false);
-  const [weekStart, setWeekStart] = useState(() => { const d = new Date(); d.setDate(d.getDate() - d.getDay()); return d; });
+  const [espacios, setEspacios] = useState<Espacio[]>([])
+  const [reservas, setReservas] = useState<Reserva[]>([])
+  const [activeTab, setActiveTab] = useState<'lista' | 'calendario'>('lista')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingEspacio, setEditingEspacio] = useState<Espacio | null>(null)
+  const [formData, setFormData] = useState(initialForm)
+  const [errors, setErrors] = useState<Partial<typeof initialForm>>({})
+  const [submitting, setSubmitting] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [weekStart, setWeekStart] = useState(() => { const d = new Date(); d.setDate(d.getDate() - d.getDay()); return d; })
 
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => { refresh() }, [])
 
-  const refresh = () => { setEspacios(store.getEspacios()); };
+  const refresh = async () => {
+    setLoading(true)
+    try {
+      const [espaciosData, reservasData] = await Promise.all([store.getEspacios(), store.getReservas()])
+      setEspacios(espaciosData)
+      setReservas(reservasData)
+    } catch (err) { console.error('Error loading espacios:', err) }
+    finally { setLoading(false) }
+  }
 
   const validate = (data: typeof formData) => {
-    const newErrors: Partial<typeof formData> = {};
-    if (!data.nombre.trim()) newErrors.nombre = 'Nombre requerido';
-    const precio = Number(data.precioPorHora);
-    if (isNaN(precio) || precio <= 0) newErrors.precioPorHora = 'Precio debe ser mayor a 0';
-    return newErrors;
-  };
+    const newErrors: Partial<typeof formData> = {}
+    if (!data.nombre.trim()) newErrors.nombre = 'Nombre requerido'
+    const precio = Number(data.precioPorHora)
+    if (isNaN(precio) || precio <= 0) newErrors.precioPorHora = 'Precio debe ser mayor a 0'
+    return newErrors
+  }
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    const newErrors = validate(formData);
-    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
-    setSubmitting(true);
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault()
+    const newErrors = validate(formData)
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
+    setSubmitting(true)
     try {
-      const data = { ...formData, precioPorHora: Number(formData.precioPorHora) };
-      if (editingEspacio) store.updateEspacio(editingEspacio.id, data);
-      else store.addEspacio(data);
-      refresh(); closeModal();
-    } finally { setSubmitting(false); }
-  };
+      const data = { ...formData, precioPorHora: Number(formData.precioPorHora) }
+      if (editingEspacio) await store.updateEspacio(editingEspacio.id, data)
+      else await store.addEspacio(data)
+      refresh(); closeModal()
+    } finally { setSubmitting(false) }
+  }
 
   const openModal = (espacio?: Espacio) => {
-    if (espacio) { setEditingEspacio(espacio); setFormData({ ...espacio, precioPorHora: String(espacio.precioPorHora) }); }
-    else { setEditingEspacio(null); setFormData(initialForm); }
-    setErrors({}); setIsModalOpen(true);
-  };
+    if (espacio) { setEditingEspacio(espacio); setFormData({ ...espacio, precioPorHora: String(espacio.precio_por_hora) }) }
+    else { setEditingEspacio(null); setFormData(initialForm) }
+    setErrors({}); setIsModalOpen(true)
+  }
 
-  const closeModal = () => { setIsModalOpen(false); setEditingEspacio(null); setFormData(initialForm); setErrors({}); };
+  const closeModal = () => { setIsModalOpen(false); setEditingEspacio(null); setFormData(initialForm); setErrors({}) }
 
-  const handleDelete = (id: string) => { if (confirm('¿Eliminar esta cancha? Se borrarán sus reservas.')) { store.deleteEspacio(id); refresh(); } };
+  const handleDelete = async (id: string) => { if (confirm('¿Eliminar esta cancha? Se borrarán sus reservas.')) { try { await store.deleteEspacio(id); refresh() } catch (err) { console.error('Error deleting espacio:', err) } } }
 
   const getTipoBadge = (tipo: TipoEspacio) => {
-    const variants: Record<TipoEspacio, 'default' | 'success' | 'info' | 'warning'> = { futbol: 'success', padel: 'info', tenis: 'warning', voley: 'default', otro: 'default' };
-    return <Badge variant={variants[tipo]}>{tipo}</Badge>;
-  };
+    const variants: Record<TipoEspacio, 'default' | 'success' | 'info' | 'warning'> = { futbol: 'success', padel: 'info', tenis: 'warning', voley: 'default', otro: 'default' }
+    return <Badge variant={variants[tipo]}>{tipo}</Badge>
+  }
 
-  const getEstadoBadge = (estado: EstadoEspacio) => <Badge variant={estado === 'activa' ? 'success' : 'warning'}>{estado}</Badge>;
+  const getEstadoBadge = (estado: EstadoEspacio) => <Badge variant={estado === 'activa' ? 'success' : 'warning'}>{estado}</Badge>
 
   const columns = [
     { key: 'nombre', header: 'Nombre', render: (e: Espacio) => <span className="font-medium">{e.nombre}</span> },
     { key: 'tipo', header: 'Tipo', render: (e: Espacio) => getTipoBadge(e.tipo) },
-    { key: 'precioPorHora', header: 'Precio/hr', render: (e: Espacio) => `$${e.precioPorHora.toLocaleString('es-AR')}` },
+    { key: 'precioPorHora', header: 'Precio/hr', render: (e: Espacio) => `$${e.precio_por_hora.toLocaleString('es-AR')}` },
     { key: 'estado', header: 'Estado', render: (e: Espacio) => getEstadoBadge(e.estado) },
     { key: 'actions', header: 'Acciones', render: (e: Espacio) => (
         <div className="flex items-center gap-2">
@@ -100,14 +111,14 @@ export default function EspaciosPage() {
           <Button size="sm" variant="ghost" onClick={(ev) => { ev.stopPropagation(); handleDelete(e.id); }} className="text-red-600">Eliminar</Button>
         </div>
       ) },
-  ];
+  ]
 
-  // Calendar logic
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i))
   const getReservasForSlot = (espacioId: string, fecha: string, hora: string) => {
-    const reservas = store.getReservas({ fecha, espacioId });
-    return reservas.find(r => r.horaInicio <= hora && r.horaFin > hora && r.estado !== 'cancelada');
-  };
+    return reservas.find(r => r.espacio_id === espacioId && r.fecha === fecha && r.hora_inicio <= hora && r.hora_fin > hora && r.estado !== 'cancelada')
+  }
+
+  if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-4 border-zinc-900 border-t-transparent"></div></div>
 
   return (
     <div className="space-y-6">
@@ -165,29 +176,28 @@ export default function EspaciosPage() {
                       <tr key={hora} className={hIdx % 2 === 1 ? 'bg-zinc-50/50 dark:bg-zinc-800/50' : ''}>
                         <td className="p-2 text-center text-zinc-600 dark:text-zinc-400 border-r border-zinc-200 dark:border-zinc-700 font-mono">{hora}</td>
                         {weekDays.map((day, dayIdx) => {
-                          const fecha = formatDate(day);
-                          const espaciosActivos = espacios.filter(e => e.estado === 'activa');
+                          const fecha = formatDate(day)
+                          const espaciosActivos = espacios.filter(e => e.estado === 'activa')
                           return (
                             <td key={dayIdx} className="p-1 border-r border-zinc-200 dark:border-zinc-700 min-h-[60px] relative">
                               {espaciosActivos.map(espacio => {
-                                const reserva = getReservasForSlot(espacio.id, fecha, hora);
-                                if (!reserva) return null;
-                                const persona = store.getPersona(reserva.personaId);
+                                const reserva = getReservasForSlot(espacio.id, fecha, hora)
+                                if (!reserva) return null
                                 return (
                                   <div
                                     key={reserva.id}
                                     className={`absolute inset-x-0.5 top-0.5 bottom-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 p-1 truncate cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors ${reserva.estado === 'pendiente_pago' ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300' : ''}`}
-                                    title={`${persona?.nombre} ${persona?.apellido} - ${reserva.horaFin}`}
+                                    title={`Reserva ${reserva.estado === 'pendiente_pago' ? '⏳' : '✓'}`}
                                   >
-                                    {persona?.nombre} {reserva.estado === 'pendiente_pago' ? '⏳' : '✓'}
+                                    {reserva.estado === 'pendiente_pago' ? '⏳' : '✓'}
                                   </div>
-                                );
+                                )
                               })}
                               {espaciosActivos.every(e => !getReservasForSlot(e.id, fecha, hora)) && (
                                 <div className="absolute inset-x-0.5 top-0.5 bottom-0.5 rounded border border-dashed border-zinc-300 dark:border-zinc-600" />
                               )}
                             </td>
-                          );
+                          )
                         })}
                       </tr>
                     ))}
@@ -219,5 +229,5 @@ export default function EspaciosPage() {
         </form>
       </Modal>
     </div>
-  );
+  )
 }
