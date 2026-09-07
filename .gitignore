@@ -40,4 +40,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# opencode / claude config (internal)
+CLAUDE.md
+AGENTS.md
+
+# documentation (referencia local, no para el repo)
+analisis-arquitectura-complejo-deportivo.md
+diseno-sistema-instituto-deportivo.md
+SETUP.md
+
 .vercel
