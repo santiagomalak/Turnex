@@ -33,6 +33,7 @@ const initialForm = {
   telefono: '',
   rol: 'socio' as RolPersona,
   estado: 'activo' as EstadoPersona,
+  plan_membresia_id: null as string | null,
 }
 
 export default function PersonasPage() {
@@ -93,7 +94,7 @@ export default function PersonasPage() {
   }
 
   const openModal = (persona?: Persona) => {
-    if (persona) { setEditingPersona(persona); setFormData({ ...persona }) }
+    if (persona) { setEditingPersona(persona); setFormData({ ...persona, dni: persona.dni ?? '', email: persona.email ?? '', telefono: persona.telefono ?? '' }) }
     else { setEditingPersona(null); setFormData(initialForm) }
     setErrors({}); setIsModalOpen(true)
   }

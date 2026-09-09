@@ -73,12 +73,12 @@ export default function AccesosPage() {
     try {
       const staffUser = staff[0] || { id: 'system' }
       if (tipo === 'entry') {
-        await store.addAcceso({ personaId: foundPersona.id, horaEntrada: new Date().toISOString(), registradoPor: staffUser.id })
+        await store.addAcceso({ persona_id: foundPersona.id, hora_entrada: new Date().toISOString(), hora_salida: null, registrado_por: staffUser.id })
         setLastAction({ type: 'entry', persona: foundPersona })
       } else {
         const accesosAbiertos = (await store.getAccesos({ personaId: foundPersona.id })).filter(a => !a.hora_salida)
         if (accesosAbiertos.length > 0) {
-          await store.updateAcceso(accesosAbiertos[0].id, { horaSalida: new Date().toISOString() })
+          await store.updateAcceso(accesosAbiertos[0].id, { hora_salida: new Date().toISOString() })
           setLastAction({ type: 'exit', persona: foundPersona })
         }
       }

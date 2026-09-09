@@ -19,14 +19,14 @@ const estadosOptions = [
 ]
 
 const initialForm = {
-  espacioId: '',
-  personaId: '',
+  espacio_id: '',
+  persona_id: '',
   fecha: new Date().toISOString().split('T')[0],
-  horaInicio: '10:00',
-  horaFin: '11:00',
+  hora_inicio: '10:00',
+  hora_fin: '11:00',
   estado: 'pendiente_pago' as EstadoReserva,
   precio: '0',
-  senaPagada: false,
+  sena_pagada: false,
 }
 
 const HORARIOS = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00']
@@ -68,19 +68,19 @@ export default function ReservasPage() {
 
   const validate = (data: typeof formData) => {
     const newErrors: Partial<typeof formData> = {}
-    if (!data.espacioId) newErrors.espacioId = 'Seleccionar espacio'
-    if (!data.personaId) newErrors.personaId = 'Seleccionar persona'
+    if (!data.espacio_id) newErrors.espacio_id = 'Seleccionar espacio'
+    if (!data.persona_id) newErrors.persona_id = 'Seleccionar persona'
     if (!data.fecha) newErrors.fecha = 'Fecha requerida'
-    if (!data.horaInicio || !data.horaFin) newErrors.horaInicio = 'Horario requerido'
-    if (data.horaInicio >= data.horaFin) newErrors.horaFin = 'Hora fin debe ser posterior a hora inicio'
+    if (!data.hora_inicio || !data.hora_fin) newErrors.hora_inicio = 'Horario requerido'
+    if (data.hora_inicio >= data.hora_fin) newErrors.hora_fin = 'Hora fin debe ser posterior a hora inicio'
     const precio = Number(data.precio)
     if (isNaN(precio) || precio <= 0) newErrors.precio = 'Precio inválido'
     return newErrors
   }
 
   const checkConflicts = async (data: typeof formData, excludeId?: string) => {
-    const allReservas = await store.getReservas({ fecha: data.fecha, espacioId: data.espacioId })
-    return allReservas.filter(r => r.id !== excludeId && r.estado !== 'cancelada' && !(data.horaFin <= r.hora_inicio || data.horaInicio >= r.hora_fin))
+    const allReservas = await store.getReservas({ fecha: data.fecha, espacioId: data.espacio_id })
+    return allReservas.filter(r => r.id !== excludeId && r.estado !== 'cancelada' && !(data.hora_fin <= r.hora_inicio || data.hora_inicio >= r.hora_fin))
   }
 
   const handleSubmit = async (e: FormEvent) => {
@@ -95,13 +95,13 @@ export default function ReservasPage() {
       if (editingReserva) await store.updateReserva(editingReserva.id, data)
       else await store.addReserva(data)
       refresh(); closeModal()
-    } catch (err) { console.error('Error saving reserva:', err); setErrors({ horaInicio: 'Error al guardar' }) }
+    } catch (err) { console.error('Error saving reserva:', err); setErrors({ hora_inicio: 'Error al guardar' }) }
     finally { setSubmitting(false) }
   }
 
   const openModal = (reserva?: Reserva) => {
     if (reserva) { setEditingReserva(reserva); setFormData({ ...reserva, precio: String(reserva.precio) }) }
-    else { setEditingReserva(null); const espacio = espacios[0]; setFormData({ ...initialForm, espacioId: espacio?.id || '', precio: String(espacio?.precio_por_hora || 0) }) }
+    else { setEditingReserva(null); const espacio = espacios[0]; setFormData({ ...initialForm, espacio_id: espacio?.id || '', precio: String(espacio?.precio_por_hora || 0) }) }
     setErrors({}); setShowConflicts([]); setIsModalOpen(true)
   }
 
@@ -111,7 +111,7 @@ export default function ReservasPage() {
 
   const handleEspacioChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const espacio = espacios.find(es => es.id === e.target.value)
-    setFormData({ ...formData, espacioId: e.target.value, precio: String(espacio?.precio_por_hora || 0) })
+    setFormData({ ...formData, espacio_id: e.target.value, precio: String(espacio?.precio_por_hora || 0) })
   }
 
   const getEstadoBadge = (estado: EstadoReserva) => {
@@ -177,20 +177,20 @@ export default function ReservasPage() {
       <Modal isOpen={isModalOpen} onClose={closeModal} title={editingReserva ? 'Editar Reserva' : 'Nueva Reserva'} size="lg">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Select label="Cancha *" value={formData.espacioId} onChange={handleEspacioChange} options={espacios.map(e => ({ value: e.id, label: `${e.nombre} (${e.tipo}) - $${e.precio_por_hora}/hr` }))} placeholder="Seleccionar cancha" required />
-            <Select label="Persona *" value={formData.personaId} onChange={e => setFormData({ ...formData, personaId: e.target.value })} options={personas.map(p => ({ value: p.id, label: `${p.nombre} ${p.apellido} (${p.rol})` }))} placeholder="Seleccionar persona" required />
+            <Select label="Cancha *" value={formData.espacio_id} onChange={handleEspacioChange} options={espacios.map(e => ({ value: e.id, label: `${e.nombre} (${e.tipo}) - $${e.precio_por_hora}/hr` }))} placeholder="Seleccionar cancha" required />
+            <Select label="Persona *" value={formData.persona_id} onChange={e => setFormData({ ...formData, persona_id: e.target.value })} options={personas.map(p => ({ value: p.id, label: `${p.nombre} ${p.apellido} (${p.rol})` }))} placeholder="Seleccionar persona" required />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input label="Fecha *" type="date" value={formData.fecha} onChange={e => setFormData({ ...formData, fecha: e.target.value })} error={errors.fecha} required />
-            <Select label="Hora inicio *" value={formData.horaInicio} onChange={e => setFormData({ ...formData, horaInicio: e.target.value })} options={HORARIOS.slice(0, -1).map(h => ({ value: h, label: h }))} placeholder="Hora inicio" required />
-            <Select label="Hora fin *" value={formData.horaFin} onChange={e => setFormData({ ...formData, horaFin: e.target.value })} options={HORARIOS.slice(1).map(h => ({ value: h, label: h }))} placeholder="Hora fin" required />
+            <Select label="Hora inicio *" value={formData.hora_inicio} onChange={e => setFormData({ ...formData, hora_inicio: e.target.value })} options={HORARIOS.slice(0, -1).map(h => ({ value: h, label: h }))} placeholder="Hora inicio" required />
+            <Select label="Hora fin *" value={formData.hora_fin} onChange={e => setFormData({ ...formData, hora_fin: e.target.value })} options={HORARIOS.slice(1).map(h => ({ value: h, label: h }))} placeholder="Hora fin" required />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input label="Precio *" type="number" min="0" step="100" value={formData.precio} onChange={e => setFormData({ ...formData, precio: e.target.value })} error={errors.precio} required />
             <Select label="Estado *" value={formData.estado} onChange={e => setFormData({ ...formData, estado: e.target.value as EstadoReserva })} options={estadosOptions} placeholder="Estado" required />
             <div className="flex items-end">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" checked={formData.senaPagada} onChange={e => setFormData({ ...formData, senaPagada: e.target.checked })} className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900" />
+                <input type="checkbox" checked={formData.sena_pagada} onChange={e => setFormData({ ...formData, sena_pagada: e.target.checked })} className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900" />
                 <span className="text-sm text-zinc-700 dark:text-zinc-300">Seña pagada</span>
               </label>
             </div>

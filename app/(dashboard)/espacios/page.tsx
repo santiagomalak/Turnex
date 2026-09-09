@@ -28,7 +28,7 @@ const estadosOptions = [
 const initialForm = {
   nombre: '',
   tipo: 'futbol' as TipoEspacio,
-  precioPorHora: '0',
+  precio_por_hora: '0',
   estado: 'activa' as EstadoEspacio,
 }
 
@@ -65,8 +65,8 @@ export default function EspaciosPage() {
   const validate = (data: typeof formData) => {
     const newErrors: Partial<typeof formData> = {}
     if (!data.nombre.trim()) newErrors.nombre = 'Nombre requerido'
-    const precio = Number(data.precioPorHora)
-    if (isNaN(precio) || precio <= 0) newErrors.precioPorHora = 'Precio debe ser mayor a 0'
+    const precio = Number(data.precio_por_hora)
+    if (isNaN(precio) || precio <= 0) newErrors.precio_por_hora = 'Precio debe ser mayor a 0'
     return newErrors
   }
 
@@ -76,7 +76,7 @@ export default function EspaciosPage() {
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
     setSubmitting(true)
     try {
-      const data = { ...formData, precioPorHora: Number(formData.precioPorHora) }
+      const data = { ...formData, precio_por_hora: Number(formData.precio_por_hora) }
       if (editingEspacio) await store.updateEspacio(editingEspacio.id, data)
       else await store.addEspacio(data)
       refresh(); closeModal()
@@ -84,7 +84,7 @@ export default function EspaciosPage() {
   }
 
   const openModal = (espacio?: Espacio) => {
-    if (espacio) { setEditingEspacio(espacio); setFormData({ ...espacio, precioPorHora: String(espacio.precio_por_hora) }) }
+    if (espacio) { setEditingEspacio(espacio); setFormData({ ...espacio, precio_por_hora: String(espacio.precio_por_hora) }) }
     else { setEditingEspacio(null); setFormData(initialForm) }
     setErrors({}); setIsModalOpen(true)
   }
@@ -103,7 +103,7 @@ export default function EspaciosPage() {
   const columns = [
     { key: 'nombre', header: 'Nombre', render: (e: Espacio) => <span className="font-medium">{e.nombre}</span> },
     { key: 'tipo', header: 'Tipo', render: (e: Espacio) => getTipoBadge(e.tipo) },
-    { key: 'precioPorHora', header: 'Precio/hr', render: (e: Espacio) => `$${e.precio_por_hora.toLocaleString('es-AR')}` },
+    { key: 'precio_por_hora', header: 'Precio/hr', render: (e: Espacio) => `$${e.precio_por_hora.toLocaleString('es-AR')}` },
     { key: 'estado', header: 'Estado', render: (e: Espacio) => getEstadoBadge(e.estado) },
     { key: 'actions', header: 'Acciones', render: (e: Espacio) => (
         <div className="flex items-center gap-2">
@@ -219,7 +219,7 @@ export default function EspaciosPage() {
           <Input label="Nombre *" value={formData.nombre} onChange={e => setFormData({ ...formData, nombre: e.target.value })} error={errors.nombre} placeholder="Cancha Fútbol 1" required />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Select label="Tipo *" value={formData.tipo} onChange={e => setFormData({ ...formData, tipo: e.target.value as TipoEspacio })} options={tiposOptions} placeholder="Seleccionar tipo" />
-            <Input label="Precio por hora *" type="number" min="0" step="100" value={formData.precioPorHora} onChange={e => setFormData({ ...formData, precioPorHora: e.target.value })} error={errors.precioPorHora} placeholder="8000" required />
+            <Input label="Precio por hora *" type="number" min="0" step="100" value={formData.precio_por_hora} onChange={e => setFormData({ ...formData, precio_por_hora: e.target.value })} error={errors.precio_por_hora} placeholder="8000" required />
           </div>
           <Select label="Estado *" value={formData.estado} onChange={e => setFormData({ ...formData, estado: e.target.value as EstadoEspacio })} options={estadosOptions} placeholder="Seleccionar estado" />
           <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
