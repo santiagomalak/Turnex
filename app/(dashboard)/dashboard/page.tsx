@@ -8,7 +8,9 @@ import { Alert } from '@/components/ui/Alert'
 import { Button } from '@/components/ui/Button'
 import type { Alerta, Cuota, Movimiento, Persona, Espacio } from '@/lib/types-supabase'
 
-const statCards = [
+type Stats = Awaited<ReturnType<typeof store.getStats>>
+
+const statCards: { key: keyof Stats; label: string; color: string; currency?: boolean }[] = [
   { key: 'totalSocios', label: 'Total Socios', color: 'bg-blue-500' },
   { key: 'morosos', label: 'Morosos', color: 'bg-red-500' },
   { key: 'cuotasPendientes', label: 'Cuotas Pendientes', color: 'bg-amber-500' },
@@ -16,6 +18,8 @@ const statCards = [
   { key: 'reservasHoy', label: 'Reservas Hoy', color: 'bg-green-500' },
   { key: 'espaciosActivos', label: 'Canchas Activas', color: 'bg-purple-500' },
   { key: 'ingresosMes', label: 'Ingresos del Mes', color: 'bg-emerald-500', currency: true },
+  { key: 'fiadoPendiente', label: 'Fiado Pendiente', color: 'bg-orange-500', currency: true },
+  { key: 'pagosStaffPendientes', label: 'A pagar a staff', color: 'bg-rose-500', currency: true },
   { key: 'accesosHoy', label: 'Accesos Hoy', color: 'bg-indigo-500' },
 ]
 
@@ -24,7 +28,7 @@ function Icon({ color }: { color: string }) {
 }
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState(store.getStats())
+  const [stats, setStats] = useState<Stats | null>(null)
   const [alertas, setAlertas] = useState<Alerta[]>([])
   const [cuotasProximas, setCuotasProximas] = useState<Cuota[]>([])
   const [ultimosPagos, setUltimosPagos] = useState<Movimiento[]>([])
@@ -73,7 +77,7 @@ export default function DashboardPage() {
     return () => clearInterval(interval)
   }, [])
 
-  if (loading) {
+  if (loading || !stats) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-zinc-900 border-t-transparent"></div>

@@ -55,12 +55,15 @@ export type Movimiento = {
   persona_id: string
   cuota_id: string | null
   reserva_id: string | null
-  tipo: 'cuota' | 'alquiler' | 'venta'
+  tipo: 'cuota' | 'alquiler' | 'venta' | 'pago_staff'
   monto: number
-  medio_pago: 'efectivo' | 'transferencia' | 'mercadopago' | 'modo' | 'debito_automatico'
+  medio_pago: 'efectivo' | 'transferencia' | 'mercadopago' | 'modo' | 'debito_automatico' | 'fiado'
   comprobante_url: string | null
   registrado_por: string
   fecha: string
+  estado: 'pendiente' | 'pagado'
+  direccion: 'ingreso' | 'egreso'
+  concepto: string | null
 }
 
 export type AccesoLog = {
@@ -90,3 +93,15 @@ export type Alerta = {
   leida: boolean
   prioridad: 'baja' | 'media' | 'alta' | 'critica'
 }
+
+export type RolPersona = Persona['rol']
+export type EstadoPersona = Persona['estado']
+export type TipoEspacio = Espacio['tipo']
+export type EstadoEspacio = Espacio['estado']
+export type EstadoReserva = Reserva['estado']
+export type EstadoCuota = Cuota['estado']
+export type TipoMovimiento = Movimiento['tipo']
+export type MedioPago = Movimiento['medio_pago']
+export type EstadoMovimiento = Movimiento['estado']
+export type DireccionMovimiento = Movimiento['direccion']
+export type RolStaff = UsuarioStaff['rol']

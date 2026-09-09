@@ -165,10 +165,12 @@ export const store = {
   },
 
   // ===== MOVIMIENTOS =====
-  async getMovimientos(filtro?: { personaId?: string; tipo?: Movimiento['tipo'] }): Promise<Movimiento[]> {
+  async getMovimientos(filtro?: { personaId?: string; tipo?: Movimiento['tipo']; estado?: Movimiento['estado']; direccion?: Movimiento['direccion'] }): Promise<Movimiento[]> {
     let query = supabase.from('movimiento').select('*')
     if (filtro?.personaId) query = query.eq('persona_id', filtro.personaId)
     if (filtro?.tipo) query = query.eq('tipo', filtro.tipo)
+    if (filtro?.estado) query = query.eq('estado', filtro.estado)
+    if (filtro?.direccion) query = query.eq('direccion', filtro.direccion)
     const { data, error } = await query.order('fecha', { ascending: false })
     if (error) throw error
     return data || []
@@ -176,6 +178,12 @@ export const store = {
 
   async addMovimiento(m: Omit<Movimiento, 'id'>): Promise<Movimiento> {
     const { data, error } = await supabase.from('movimiento').insert(m).select().single()
+    if (error) throw error
+    return data
+  },
+
+  async updateMovimiento(id: string, updates: Partial<Movimiento>): Promise<Movimiento | null> {
+    const { data, error } = await supabase.from('movimiento').update(updates).eq('id', id).select().single()
     if (error) throw error
     return data
   },
@@ -243,7 +251,9 @@ export const store = {
               mensaje: esVencida
                 ? `${persona.nombre} ${persona.apellido} tiene cuota vencida (${formatCurrency(cuota.monto)})`
                 : `${persona.nombre} ${persona.apellido} vence cuota el ${cuota.fecha_vencimiento} (${formatCurrency(cuota.monto)})`,
-              personaId: persona.id,
+              persona_id: persona.id,
+              espacio_id: null,
+              reserva_id: null,
               fecha: now.toISOString(),
               leida: false,
               prioridad: esVencida ? 'alta' : 'media',
@@ -261,7 +271,9 @@ export const store = {
           id: uid(),
           tipo: 'espacio_mantenimiento',
           mensaje: `La ${e.nombre} está en mantenimiento`,
-          espacioId: e.id,
+          persona_id: null,
+          espacio_id: e.id,
+          reserva_id: null,
           fecha: now.toISOString(),
           leida: false,
           prioridad: 'media',
@@ -287,9 +299,9 @@ export const store = {
             id: uid(),
             tipo: 'reserva_proxima',
             mensaje: `Reserva de ${persona.nombre} ${persona.apellido} en ${espacio.nombre} a las ${r.hora_inicio}`,
-            personaId: persona.id,
-            espacioId: espacio.id,
-            reservaId: r.id,
+            persona_id: persona.id,
+            espacio_id: espacio.id,
+            reserva_id: r.id,
             fecha: now.toISOString(),
             leida: false,
             prioridad: 'baja',
@@ -307,12 +319,13 @@ export const store = {
 
   // ===== STATS PARA DASHBOARD =====
   async getStats() {
-    const [personas, cuotas, reservasHoy, espacios, movimientos, accesosHoy] = await Promise.all([
+    const [personas, cuotas, reservasHoy, espacios, movimientos, pendientes, accesosHoy] = await Promise.all([
       supabase.from('persona').select('id, rol, estado').eq('rol', 'socio'),
       supabase.from('cuota').select('estado').in('estado', ['pendiente', 'vencida']),
       supabase.from('reserva').select('id', { count: 'exact' }).eq('fecha', formatDate(today)).eq('estado', 'confirmada'),
       supabase.from('espacio').select('id', { count: 'exact' }).eq('estado', 'activa'),
-      supabase.from('movimiento').select('monto').gte('fecha', startOfMonth.toISOString()).lte('fecha', endOfMonth.toISOString()),
+      supabase.from('movimiento').select('monto').eq('estado', 'pagado').eq('direccion', 'ingreso').gte('fecha', startOfMonth.toISOString()).lte('fecha', endOfMonth.toISOString()),
+      supabase.from('movimiento').select('monto, direccion').eq('estado', 'pendiente'),
       supabase.from('acceso_log').select('id', { count: 'exact' }).gte('hora_entrada', formatDate(today)),
     ])
 
@@ -322,6 +335,9 @@ export const store = {
     const cuotasPendientes = cuotasData.filter(c => c.estado === 'pendiente').length
     const cuotasVencidas = cuotasData.filter(c => c.estado === 'vencida').length
     const ingresosMes = (movimientos.data || []).reduce((sum, m) => sum + m.monto, 0)
+    const pendientesData = pendientes.data || []
+    const fiadoPendiente = pendientesData.filter(m => m.direccion === 'ingreso').reduce((sum, m) => sum + m.monto, 0)
+    const pagosStaffPendientes = pendientesData.filter(m => m.direccion === 'egreso').reduce((sum, m) => sum + m.monto, 0)
 
     return {
       totalSocios: socios.length,
@@ -331,6 +347,8 @@ export const store = {
       reservasHoy: reservasHoy.count || 0,
       espaciosActivos: espacios.count || 0,
       ingresosMes,
+      fiadoPendiente,
+      pagosStaffPendientes,
       accesosHoy: accesosHoy.count || 0,
       alertasNoLeidas: (await this.getAlertas(true)).length,
     }
