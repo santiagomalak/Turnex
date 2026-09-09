@@ -6,10 +6,9 @@ export type Persona = {
   email: string | null
   telefono: string | null
   rol: 'socio' | 'invitado' | 'staff' | 'profesor'
-  estado: 'activo' | 'inactivo' | 'moroso'
+  estado: 'activo' | 'inactivo' | 'moroso' | 'pendiente_aprobacion'
   fecha_alta: string
   plan_membresia_id: string | null
-  avatar?: string
 }
 
 export type PlanMembresia = {
@@ -23,7 +22,7 @@ export type PlanMembresia = {
 export type Espacio = {
   id: string
   nombre: string
-  tipo: 'futbol' | 'padel' | 'tenis' | 'voley' | 'otro'
+  tipo: 'futbol' | 'padel' | 'tenis' | 'voley' | 'beach_voley' | 'otro'
   precio_por_hora: number
   estado: 'activa' | 'mantenimiento'
 }
@@ -59,7 +58,7 @@ export type Movimiento = {
   monto: number
   medio_pago: 'efectivo' | 'transferencia' | 'mercadopago' | 'modo' | 'debito_automatico' | 'fiado'
   comprobante_url: string | null
-  registrado_por: string
+  registrado_por: string | null
   fecha: string
   estado: 'pendiente' | 'pagado'
   direccion: 'ingreso' | 'egreso'
@@ -71,7 +70,7 @@ export type AccesoLog = {
   persona_id: string
   hora_entrada: string
   hora_salida: string | null
-  registrado_por: string
+  registrado_por: string | null
 }
 
 export type UsuarioStaff = {

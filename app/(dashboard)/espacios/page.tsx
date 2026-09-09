@@ -17,6 +17,7 @@ const tiposOptions = [
   { value: 'padel', label: 'Pádel' },
   { value: 'tenis', label: 'Tenis' },
   { value: 'voley', label: 'Vóley' },
+  { value: 'beach_voley', label: 'Beach vóley' },
   { value: 'otro', label: 'Otro' },
 ]
 
@@ -94,8 +95,8 @@ export default function EspaciosPage() {
   const handleDelete = async (id: string) => { if (confirm('¿Eliminar esta cancha? Se borrarán sus reservas.')) { try { await store.deleteEspacio(id); refresh() } catch (err) { console.error('Error deleting espacio:', err) } } }
 
   const getTipoBadge = (tipo: TipoEspacio) => {
-    const variants: Record<TipoEspacio, 'default' | 'success' | 'info' | 'warning'> = { futbol: 'success', padel: 'info', tenis: 'warning', voley: 'default', otro: 'default' }
-    return <Badge variant={variants[tipo]}>{tipo}</Badge>
+    const variants: Record<TipoEspacio, 'default' | 'success' | 'info' | 'warning'> = { futbol: 'success', padel: 'info', tenis: 'warning', voley: 'default', beach_voley: 'default', otro: 'default' }
+    return <Badge variant={variants[tipo]}>{tipo.replace('_', ' ')}</Badge>
   }
 
   const getEstadoBadge = (estado: EstadoEspacio) => <Badge variant={estado === 'activa' ? 'success' : 'warning'}>{estado}</Badge>

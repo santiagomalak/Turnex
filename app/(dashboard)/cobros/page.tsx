@@ -140,7 +140,7 @@ export default function CobrosPage() {
         concepto: formData.concepto || null,
         estado,
         direccion: esEgreso ? ('egreso' as const) : ('ingreso' as const),
-        registrado_por: (await store.getUsuariosStaff())[0]?.id || 'system',
+        registrado_por: (await store.getUsuariosStaff())[0]?.id ?? null,
         fecha: new Date().toISOString(),
       }
       await store.addMovimiento(movimientoData)

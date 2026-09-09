@@ -31,6 +31,9 @@ export default function AccesosPage() {
   const [personasDentro, setPersonasDentro] = useState<Array<{ persona: Persona; acceso: AccesoLog; hrs: number; mins: number }>>([])
 
   useEffect(() => { refresh(); loadPersonas(); loadStaff() }, [])
+  // refresh() arma "personas dentro" a partir del state `personas`, que se carga
+  // por separado: al llegar, recalculamos para que la tarjeta no quede vacía.
+  useEffect(() => { if (personas.length > 0) refresh() }, [personas])
 
   const loadPersonas = async () => {
     try { const data = await store.getPersonas(); setPersonas(data.filter(p => p.estado === 'activo')) } catch (err) { console.error('Error loading personas:', err) }
@@ -71,9 +74,9 @@ export default function AccesosPage() {
     if (!foundPersona) return
     setCheckinLoading(true)
     try {
-      const staffUser = staff[0] || { id: 'system' }
+      const registradoPor = staff[0]?.id ?? null
       if (tipo === 'entry') {
-        await store.addAcceso({ persona_id: foundPersona.id, hora_entrada: new Date().toISOString(), hora_salida: null, registrado_por: staffUser.id })
+        await store.addAcceso({ persona_id: foundPersona.id, hora_entrada: new Date().toISOString(), hora_salida: null, registrado_por: registradoPor })
         setLastAction({ type: 'entry', persona: foundPersona })
       } else {
         const accesosAbiertos = (await store.getAccesos({ personaId: foundPersona.id })).filter(a => !a.hora_salida)
@@ -172,25 +175,18 @@ export default function AccesosPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {(async () => {
-                    const accesosAbiertos = (await store.getAccesos()).filter(a => !a.hora_salida)
-                    return accesosAbiertos.map(acceso => {
-                      const persona = personas.find(p => p.id === acceso.persona_id)
-                      if (!persona) return null
-                      const duracion = Date.now() - new Date(acceso.hora_entrada).getTime()
-                      const hrs = Math.floor(duracion / 3600000)
-                      const mins = Math.floor((duracion % 3600000) / 60000)
-                      return (
-                        <div key={acceso.id} className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                          <div>
-                            <p className="font-medium text-green-800 dark:text-green-300">{persona.nombre} {persona.apellido}</p>
-                            <p className="text-sm text-green-600 dark:text-green-400">Entró: {new Date(acceso.hora_entrada).toLocaleTimeString('es-AR')} · Hace {hrs}h {mins}m</p>
-                          </div>
-                          <Badge variant="success">DENTRO</Badge>
-                        </div>
-                      )
-                    })
-                  })()}
+                  {personasDentro.length === 0 && (
+                    <p className="text-center py-8 text-zinc-500 dark:text-zinc-400">Nadie en el predio ahora mismo</p>
+                  )}
+                  {personasDentro.map(({ persona, acceso, hrs, mins }) => (
+                    <div key={acceso.id} className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                      <div>
+                        <p className="font-medium text-green-800 dark:text-green-300">{persona.nombre} {persona.apellido}</p>
+                        <p className="text-sm text-green-600 dark:text-green-400">Entró: {new Date(acceso.hora_entrada).toLocaleTimeString('es-AR')} · Hace {hrs}h {mins}m</p>
+                      </div>
+                      <Badge variant="success">DENTRO</Badge>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>

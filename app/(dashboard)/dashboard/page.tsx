@@ -33,24 +33,29 @@ export default function DashboardPage() {
   const [cuotasProximas, setCuotasProximas] = useState<Cuota[]>([])
   const [ultimosPagos, setUltimosPagos] = useState<Movimiento[]>([])
   const [ocupacion, setOcupacion] = useState<{ espacio: Espacio; ocupacion: number }[]>([])
+  const [nombrePorPersona, setNombrePorPersona] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(true)
+
+  const nombrePersona = (id: string) => nombrePorPersona[id] ?? 'Persona sin identificar'
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(value)
 
   async function loadData() {
     setLoading(true)
     try {
-      const [s, a, cp, up, occ] = await Promise.all([
+      const [s, a, cp, up, occ, personas] = await Promise.all([
         store.getStats(),
         store.getAlertas(true),
         store.getCuotas({ estado: 'pendiente' }),
         store.getMovimientos(),
         store.getEspacios(),
+        store.getPersonas(),
       ])
       setStats(s)
       setAlertas(a)
       setCuotasProximas(cp.slice(0, 5))
-      setUltimosPagos(up.slice(0, 5))
+      setUltimosPagos(up.filter(m => m.direccion === 'ingreso' && m.estado === 'pagado').slice(0, 5))
+      setNombrePorPersona(Object.fromEntries(personas.map(p => [p.id, `${p.nombre} ${p.apellido}`])))
 
       // Calcular ocupación de hoy
       const hoy = new Date().toISOString().split('T')[0]
@@ -153,7 +158,7 @@ export default function DashboardPage() {
               {cuotasProximas.map(cuota => (
                 <div key={cuota.id} className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
                   <div>
-                    <p className="font-medium text-zinc-900 dark:text-white">Socio ID: {cuota.persona_id}</p>
+                    <p className="font-medium text-zinc-900 dark:text-white">{nombrePersona(cuota.persona_id)}</p>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400">Vence {cuota.fecha_vencimiento} · {formatCurrency(cuota.monto)}</p>
                   </div>
                   <Badge variant={new Date(cuota.fecha_vencimiento) < new Date() ? 'danger' : 'warning'}>{new Date(cuota.fecha_vencimiento) < new Date() ? 'Vencida' : 'Pendiente'}</Badge>
@@ -195,7 +200,7 @@ export default function DashboardPage() {
               {ultimosPagos.map(mov => (
                 <div key={mov.id} className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
                   <div>
-                    <p className="font-medium text-zinc-900 dark:text-white">Persona: {mov.persona_id}</p>
+                    <p className="font-medium text-zinc-900 dark:text-white">{nombrePersona(mov.persona_id)}</p>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400">{mov.tipo} · {mov.medio_pago}</p>
                   </div>
                   <span className="font-semibold text-green-600 dark:text-green-400">{formatCurrency(mov.monto)}</span>
