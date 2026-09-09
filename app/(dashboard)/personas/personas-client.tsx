@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Table } from '@/components/ui/Table'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
@@ -126,9 +127,9 @@ export function PersonasClient({
       key: 'nombre',
       header: 'Nombre',
       render: (p: Persona) => (
-        <span className="font-medium">
+        <Link href={`/personas/${p.id}`} className="font-medium text-zinc-900 dark:text-white hover:underline">
           {p.nombre} {p.apellido}
-        </span>
+        </Link>
       ),
     },
     { key: 'dni', header: 'DNI', render: (p: Persona) => p.dni || <span className="text-zinc-400">—</span> },
@@ -152,6 +153,9 @@ export function PersonasClient({
       header: 'Acciones',
       render: (p: Persona) => (
         <div className="flex items-center gap-2">
+          <Button size="sm" variant="ghost" onClick={() => router.push(`/personas/${p.id}`)}>
+            Ficha
+          </Button>
           <Button size="sm" variant="ghost" onClick={() => openEdit(p)}>
             Editar
           </Button>

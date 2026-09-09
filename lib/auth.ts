@@ -64,7 +64,7 @@ export const getCurrentStaff = cache(async (): Promise<SesionStaff | null> => {
 })
 
 /** Para páginas/layouts: exige staff (y opcionalmente un rol). Redirige si no. */
-export async function requireStaff(roles?: StaffRol[]): Promise<SesionStaff> {
+export async function requireStaff(roles?: readonly StaffRol[]): Promise<SesionStaff> {
   const staff = await getCurrentStaff()
   if (!staff) redirect('/login')
   if (roles && !roles.includes(staff.rol)) redirect('/sin-acceso')
@@ -72,7 +72,7 @@ export async function requireStaff(roles?: StaffRol[]): Promise<SesionStaff> {
 }
 
 /** Para Server Actions: devuelve el staff o null (sin redirigir). */
-export async function staffPuede(roles?: StaffRol[]): Promise<SesionStaff | null> {
+export async function staffPuede(roles?: readonly StaffRol[]): Promise<SesionStaff | null> {
   const staff = await getCurrentStaff()
   if (!staff) return null
   if (roles && !roles.includes(staff.rol)) return null

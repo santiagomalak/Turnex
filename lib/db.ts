@@ -1,5 +1,5 @@
 import 'server-only'
-import { Pool, types, type QueryResultRow, type PoolClient } from 'pg'
+import { Pool, types, type QueryResult, type QueryResultRow, type PoolClient } from 'pg'
 
 // Acceso a Postgres (Supabase) con SQL directo — sin ORM (ver PROJECT.md §2).
 // Este módulo es server-only: nunca debe terminar en el bundle del navegador.
@@ -53,6 +53,20 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
 ) {
   return pool.query<T>(text, params)
 }
+
+/**
+ * Ejecutor de queries: lo cumplen tanto el pool/`query` de arriba como el
+ * `PoolClient` que recibe `tx()`. Los repos lo aceptan para poder participar
+ * de una transacción o correr sueltos.
+ */
+export type Db = {
+  query<T extends QueryResultRow = QueryResultRow>(
+    text: string,
+    params?: unknown[]
+  ): Promise<QueryResult<T>>
+}
+
+export const db: Db = { query }
 
 /**
  * Ejecuta `fn` dentro de una transacción: commit si resuelve, rollback si lanza.

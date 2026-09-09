@@ -42,29 +42,69 @@ export type Reserva = {
   creado_en: string
 }
 
+export type EstadoCuota = 'pendiente' | 'parcial' | 'pagada' | 'vencida'
+
 export type Cuota = {
   id: string
   persona_id: string
-  periodo: string
+  periodo: string | null
   monto: number
-  estado: 'pendiente' | 'pagada' | 'vencida'
+  estado: EstadoCuota
   fecha_vencimiento: string
+  plan_pago_id: string | null
+  concepto: string | null
+  movimiento_id: string | null
 }
+
+export type ClaseMovimiento = 'cargo' | 'pago'
+export type DireccionMov = 'ingreso' | 'egreso'
+export type TipoMov = 'cuota' | 'alquiler' | 'venta' | 'pago_staff' | 'ajuste' | 'pago'
+export type MedioPago =
+  | 'efectivo'
+  | 'transferencia'
+  | 'mercadopago'
+  | 'modo'
+  | 'debito_automatico'
+  | 'fiado'
+export type EstadoMov = 'pendiente' | 'parcial' | 'saldado' | 'pagado'
 
 export type Movimiento = {
   id: string
   persona_id: string
   cuota_id: string | null
   reserva_id: string | null
-  tipo: 'cuota' | 'alquiler' | 'venta' | 'pago_staff'
+  clase: ClaseMovimiento
+  tipo: TipoMov
   monto: number
-  medio_pago: 'efectivo' | 'transferencia' | 'mercadopago' | 'modo' | 'debito_automatico' | 'fiado'
+  saldo: number
+  medio_pago: MedioPago | null
   comprobante_url: string | null
   registrado_por: string | null
   fecha: string
-  estado: 'pendiente' | 'pagado'
-  direccion: 'ingreso' | 'egreso'
+  vence_el: string | null
+  estado: EstadoMov
+  direccion: DireccionMov
   concepto: string | null
+  anulado: boolean
+}
+
+export type Imputacion = {
+  id: string
+  pago_id: string
+  cargo_id: string
+  monto: number
+  creado_en: string
+}
+
+export type PlanPago = {
+  id: string
+  persona_id: string
+  descripcion: string
+  total: number
+  cant_cuotas: number
+  estado: 'vigente' | 'completado' | 'cancelado'
+  creado_por: string | null
+  creado_en: string
 }
 
 export type AccesoLog = {
@@ -100,9 +140,9 @@ export type EstadoPersona = Persona['estado']
 export type TipoEspacio = Espacio['tipo']
 export type EstadoEspacio = Espacio['estado']
 export type EstadoReserva = Reserva['estado']
-export type EstadoCuota = Cuota['estado']
-export type TipoMovimiento = Movimiento['tipo']
-export type MedioPago = Movimiento['medio_pago']
-export type EstadoMovimiento = Movimiento['estado']
-export type DireccionMovimiento = Movimiento['direccion']
 export type RolStaff = UsuarioStaff['rol']
+
+// Alias de compatibilidad (páginas viejas todavía client-side)
+export type TipoMovimiento = TipoMov
+export type EstadoMovimiento = EstadoMov
+export type DireccionMovimiento = DireccionMov
