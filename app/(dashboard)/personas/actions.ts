@@ -2,8 +2,10 @@
 
 import { revalidatePath } from 'next/cache'
 import { parsePersona, crearPersona, editarPersona, eliminarPersona } from '@/lib/services/persona'
-import { ok, fromZodError, fromDbError, type ActionResult } from '@/lib/action-result'
-// TODO (Fase 1): await requireStaff(['admin', 'recepcion']) al inicio de cada action.
+import { ok, fail, fromZodError, fromDbError, type ActionResult } from '@/lib/action-result'
+import { staffPuede } from '@/lib/auth'
+
+const SIN_PERMISO = fail('No tenés permiso para esta acción')
 
 function readForm(formData: FormData) {
   return {
@@ -22,6 +24,7 @@ export async function guardarPersonaAction(
   _prev: ActionResult | null,
   formData: FormData
 ): Promise<ActionResult> {
+  if (!(await staffPuede(['admin', 'recepcion']))) return SIN_PERMISO
   const id = (formData.get('id') as string) || null
   const parsed = parsePersona(readForm(formData))
   if (!parsed.success) return fromZodError(parsed.error)
@@ -38,6 +41,7 @@ export async function guardarPersonaAction(
 }
 
 export async function eliminarPersonaAction(id: string): Promise<ActionResult> {
+  if (!(await staffPuede(['admin']))) return SIN_PERMISO
   try {
     await eliminarPersona(id)
   } catch (err) {

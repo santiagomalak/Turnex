@@ -3,21 +3,24 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ReactNode } from 'react';
+import type { StaffRol } from '@/lib/auth';
 
 interface NavItem {
   href: string;
   label: string;
   icon: ReactNode;
-  badge?: number;
+  roles: StaffRol[];
 }
 
+const ALL: StaffRol[] = ['admin', 'recepcion', 'cobranzas', 'profesor'];
+
 const navigation: NavItem[] = [
-  { href: '/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
-  { href: '/personas', label: 'Personas', icon: <UsersIcon /> },
-  { href: '/espacios', label: 'Espacios', icon: <CourtIcon /> },
-  { href: '/reservas', label: 'Reservas', icon: <CalendarIcon /> },
-  { href: '/cobros', label: 'Cobros', icon: <PaymentIcon /> },
-  { href: '/accesos', label: 'Accesos', icon: <AccessIcon /> },
+  { href: '/dashboard', label: 'Dashboard', icon: <DashboardIcon />, roles: ALL },
+  { href: '/personas', label: 'Personas', icon: <UsersIcon />, roles: ['admin', 'recepcion', 'cobranzas'] },
+  { href: '/espacios', label: 'Espacios', icon: <CourtIcon />, roles: ['admin', 'recepcion'] },
+  { href: '/reservas', label: 'Reservas', icon: <CalendarIcon />, roles: ['admin', 'recepcion', 'profesor'] },
+  { href: '/cobros', label: 'Cobros', icon: <PaymentIcon />, roles: ['admin', 'recepcion', 'cobranzas'] },
+  { href: '/accesos', label: 'Accesos', icon: <AccessIcon />, roles: ['admin', 'recepcion'] },
 ];
 
 function DashboardIcon() {
@@ -39,8 +42,9 @@ function AccessIcon() {
   return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>;
 }
 
-export function Sidebar() {
+export function Sidebar({ rol }: { rol: StaffRol }) {
   const pathname = usePathname();
+  const items = navigation.filter((item) => item.roles.includes(rol));
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-700 transform transition-transform duration-200 lg:translate-x-0">
@@ -51,7 +55,7 @@ export function Sidebar() {
           </Link>
         </div>
         <nav className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
-          {navigation.map(item => {
+          {items.map(item => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
               <Link
@@ -67,18 +71,13 @@ export function Sidebar() {
               >
                 <span className="flex-shrink-0">{item.icon}</span>
                 <span className="truncate">{item.label}</span>
-                {item.badge && item.badge > 0 && (
-                  <span className="ml-auto px-2 py-0.5 text-xs font-medium bg-zinc-100 text-zinc-700 rounded-full dark:bg-zinc-800 dark:text-zinc-300">
-                    {item.badge}
-                  </span>
-                )}
               </Link>
             );
           })}
         </nav>
         <div className="p-4 border-t border-zinc-200 dark:border-zinc-700">
           <div className="text-xs text-zinc-500 dark:text-zinc-400 text-center">
-            v0.1.0 · Demo Mode
+            v0.1.0
           </div>
         </div>
       </div>

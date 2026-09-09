@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useState, useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Table } from '@/components/ui/Table'
 import { Modal } from '@/components/ui/Modal'
@@ -41,6 +41,8 @@ const estadoBadge: Record<EstadoPersona, 'success' | 'neutral' | 'danger' | 'war
   pendiente_aprobacion: 'warning',
 }
 
+type FormError = { error: string; fieldErrors?: Record<string, string> }
+
 export function PersonasClient({
   personas,
   planes,
@@ -52,33 +54,41 @@ export function PersonasClient({
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Persona | null>(null)
   const [rol, setRol] = useState<RolPersona>('socio')
+  const [formError, setFormError] = useState<FormError | null>(null)
+  const [saving, startSave] = useTransition()
+
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDeleting, startDelete] = useTransition()
 
-  const [state, formAction, pending] = useActionState(guardarPersonaAction, null)
-
-  useEffect(() => {
-    if (state?.ok) {
-      setModalOpen(false)
-      setEditing(null)
-      router.refresh()
-    }
-  }, [state, router])
-
-  const planNombre = (id: string | null) =>
-    planes.find((p) => p.id === id)?.nombre ?? '—'
+  const planNombre = (id: string | null) => planes.find((p) => p.id === id)?.nombre ?? '—'
 
   function openNew() {
     setEditing(null)
     setRol('socio')
+    setFormError(null)
     setModalOpen(true)
   }
 
   function openEdit(p: Persona) {
     setEditing(p)
     setRol(p.rol)
+    setFormError(null)
     setModalOpen(true)
+  }
+
+  function handleSubmit(formData: FormData) {
+    setFormError(null)
+    startSave(async () => {
+      const res = await guardarPersonaAction(null, formData)
+      if (res.ok) {
+        setModalOpen(false)
+        setEditing(null)
+        router.refresh()
+      } else {
+        setFormError({ error: res.error, fieldErrors: res.fieldErrors })
+      }
+    })
   }
 
   function handleDelete(p: Persona) {
@@ -93,7 +103,7 @@ export function PersonasClient({
     })
   }
 
-  const fieldErr = state && !state.ok ? state.fieldErrors : undefined
+  const fieldErr = formError?.fieldErrors
 
   const columns = [
     {
@@ -112,7 +122,8 @@ export function PersonasClient({
     {
       key: 'plan',
       header: 'Plan',
-      render: (p: Persona) => (p.rol === 'socio' ? planNombre(p.plan_membresia_id) : <span className="text-zinc-400">—</span>),
+      render: (p: Persona) =>
+        p.rol === 'socio' ? planNombre(p.plan_membresia_id) : <span className="text-zinc-400">—</span>,
     },
     {
       key: 'estado',
@@ -175,12 +186,10 @@ export function PersonasClient({
         title={editing ? 'Editar persona' : 'Nueva persona'}
         size="lg"
       >
-        <form action={formAction} className="space-y-4">
+        <form action={handleSubmit} className="space-y-4">
           {editing && <input type="hidden" name="id" value={editing.id} />}
 
-          {state && !state.ok && !state.fieldErrors && (
-            <Alert variant="danger">{state.error}</Alert>
-          )}
+          {formError && !fieldErr && <Alert variant="danger">{formError.error}</Alert>}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input label="Nombre *" name="nombre" defaultValue={editing?.nombre ?? ''} error={fieldErr?.nombre} placeholder="Juan" required />
@@ -226,7 +235,7 @@ export function PersonasClient({
             <Button type="button" variant="secondary" onClick={() => setModalOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" loading={pending}>
+            <Button type="submit" loading={saving}>
               {editing ? 'Guardar cambios' : 'Crear persona'}
             </Button>
           </div>

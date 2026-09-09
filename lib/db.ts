@@ -19,7 +19,6 @@ types.setTypeParser(1114, (v) => new Date(v.replace(' ', 'T') + 'Z').toISOString
 types.setTypeParser(1184, (v) => new Date(v).toISOString()) // timestamptz
 
 declare global {
-  // eslint-disable-next-line no-var
   var _pgPool: Pool | undefined
 }
 
