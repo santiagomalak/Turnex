@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Table } from '@/components/ui/Table'
 import { Modal } from '@/components/ui/Modal'
@@ -60,6 +60,22 @@ export function PersonasClient({
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [isDeleting, startDelete] = useTransition()
+
+  const [busqueda, setBusqueda] = useState('')
+  const [filtroRol, setFiltroRol] = useState<RolPersona | ''>('')
+
+  const visibles = useMemo(() => {
+    const q = busqueda.trim().toLowerCase()
+    return personas.filter((p) => {
+      if (filtroRol && p.rol !== filtroRol) return false
+      if (!q) return true
+      return (
+        `${p.nombre} ${p.apellido}`.toLowerCase().includes(q) ||
+        (p.dni ?? '').includes(q) ||
+        (p.email ?? '').toLowerCase().includes(q)
+      )
+    })
+  }, [personas, busqueda, filtroRol])
 
   const planNombre = (id: string | null) => planes.find((p) => p.id === id)?.nombre ?? '—'
 
@@ -170,12 +186,29 @@ export function PersonasClient({
       )}
 
       <Card padding="md">
-        <CardContent>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Input
+              placeholder="Buscar por nombre, DNI o email…"
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+              className="sm:max-w-xs"
+            />
+            <Select
+              value={filtroRol}
+              onChange={(e) => setFiltroRol(e.target.value as RolPersona | '')}
+              options={[{ value: '', label: 'Todos los roles' }, ...rolesOptions]}
+              className="sm:w-48"
+            />
+            <span className="text-sm text-zinc-500 dark:text-zinc-400 self-center">
+              {visibles.length} de {personas.length}
+            </span>
+          </div>
           <Table
             columns={columns}
-            data={personas}
+            data={visibles}
             keyExtractor={(p) => p.id}
-            emptyMessage="No hay personas registradas"
+            emptyMessage="Ninguna persona coincide con la búsqueda"
           />
         </CardContent>
       </Card>

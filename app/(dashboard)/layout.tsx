@@ -15,7 +15,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar rol={staff.rol} />
-      <main className="flex-1 flex flex-col overflow-hidden lg:ml-64">
+      <main className="flex-1 flex flex-col overflow-hidden ml-64">
         <header className="h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 flex items-center justify-between">
           <h1 className="text-xl font-semibold text-zinc-900 dark:text-white">Turnex</h1>
           <div className="flex items-center gap-4">

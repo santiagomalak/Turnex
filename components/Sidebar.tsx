@@ -17,6 +17,7 @@ const ALL: StaffRol[] = ['admin', 'recepcion', 'cobranzas', 'profesor'];
 const navigation: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: <DashboardIcon />, roles: ALL },
   { href: '/personas', label: 'Personas', icon: <UsersIcon />, roles: ['admin', 'recepcion', 'cobranzas'] },
+  { href: '/planes', label: 'Planes', icon: <PlanIcon />, roles: ['admin'] },
   { href: '/espacios', label: 'Espacios', icon: <CourtIcon />, roles: ['admin', 'recepcion'] },
   { href: '/reservas', label: 'Reservas', icon: <CalendarIcon />, roles: ['admin', 'recepcion', 'profesor'] },
   { href: '/cobros', label: 'Cobros', icon: <PaymentIcon />, roles: ['admin', 'recepcion', 'cobranzas'] },
@@ -28,6 +29,9 @@ function DashboardIcon() {
 }
 function UsersIcon() {
   return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>;
+}
+function PlanIcon() {
+  return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.99 1.99 0 013 12V7a4 4 0 014-4z"/></svg>;
 }
 function CourtIcon() {
   return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>;
@@ -47,7 +51,7 @@ export function Sidebar({ rol }: { rol: StaffRol }) {
   const items = navigation.filter((item) => item.roles.includes(rol));
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-700 transform transition-transform duration-200 lg:translate-x-0">
+    <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-700">
       <div className="flex h-full flex-col">
         <div className="flex h-16 items-center justify-between px-6 border-b border-zinc-200 dark:border-zinc-700">
           <Link href="/dashboard" className="text-xl font-bold text-zinc-900 dark:text-white">

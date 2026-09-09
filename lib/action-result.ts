@@ -1,22 +1,28 @@
 import type { ZodError } from 'zod'
 
 // Resultado estándar de un Server Action. La UI decide qué mostrar según `ok`.
-export type ActionResult<T = void> =
-  | ({ ok: true } & (T extends void ? { data?: undefined } : { data: T }))
-  | { ok: false; error: string; fieldErrors?: Record<string, string> }
-
-export function ok<T>(data: T): ActionResult<T>
-export function ok(): ActionResult
-export function ok<T>(data?: T): ActionResult<T> {
-  return { ok: true, data } as ActionResult<T>
+export type ActionFail = {
+  ok: false
+  error: string
+  fieldErrors?: Record<string, string>
 }
 
-export function fail(error: string, fieldErrors?: Record<string, string>): ActionResult<never> {
+export type ActionOk<T> = { ok: true; data: T }
+
+export type ActionResult<T = undefined> = ActionOk<T> | ActionFail
+
+export function ok(): ActionResult<undefined>
+export function ok<T>(data: T): ActionResult<T>
+export function ok<T>(data?: T): ActionResult<T | undefined> {
+  return { ok: true, data }
+}
+
+export function fail(error: string, fieldErrors?: Record<string, string>): ActionFail {
   return { ok: false, error, fieldErrors }
 }
 
 /** Convierte un ZodError en `fieldErrors` (un mensaje por campo). */
-export function fromZodError(err: ZodError): ActionResult<never> {
+export function fromZodError(err: ZodError): ActionFail {
   const fieldErrors: Record<string, string> = {}
   for (const issue of err.issues) {
     const key = issue.path.join('.') || '_'
@@ -26,7 +32,7 @@ export function fromZodError(err: ZodError): ActionResult<never> {
 }
 
 /** Mapea errores conocidos de Postgres a mensajes en castellano. */
-export function fromDbError(err: unknown): ActionResult<never> {
+export function fromDbError(err: unknown): ActionFail {
   const e = err as { code?: string; constraint?: string; detail?: string }
   switch (e.code) {
     case '23505': // unique_violation

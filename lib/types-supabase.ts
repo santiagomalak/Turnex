@@ -17,6 +17,7 @@ export type PlanMembresia = {
   precio_mensual: number
   incluye_canchas: boolean
   descuento_porcentaje: number
+  activo: boolean
 }
 
 export type Espacio = {
@@ -25,6 +26,7 @@ export type Espacio = {
   tipo: 'futbol' | 'padel' | 'tenis' | 'voley' | 'beach_voley' | 'otro'
   precio_por_hora: number
   estado: 'activa' | 'mantenimiento'
+  sector: string | null
 }
 
 export type Reserva = {

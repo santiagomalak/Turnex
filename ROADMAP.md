@@ -18,7 +18,8 @@ con portal para el socio. Preparado para MercadoPago y multi-cliente, sin constr
 | Auth | Supabase Auth (email/password). Staff con roles + portal del socio. |
 | Base de datos | Supabase bajo cuenta personal por ahora. Al cerrar con el cliente se migra a un proyecto propio del cliente (todo el schema vive en migraciones para que sea portable). |
 | Cobros | Registro manual multi-medio. MercadoPago = fase posterior (el modelo ya queda listo). |
-| Reserva de cancha | Seña del 50% al reservar. **Socio**: puede reservar directo, la seña/saldo va a su cuenta corriente. **No socio/invitado**: reserva *provisoria* que se libera sola si no paga la seña en X horas (configurable). |
+| Reserva de cancha | **Socio**: reserva cuando quiere (portal o recepción), sin pago por adelantado — el alquiler va a su cuenta corriente. **No socio**: solo recepción carga la reserva y cobra el **100%** en el momento; no hay reserva online para no socios (hasta MercadoPago). El % de pago del no socio queda configurable (default 100). |
+| Landing pública | Página simple: presentación del complejo, deportes/canchas, disponibilidad de horarios, y CTAs "Soy socio" (portal) / "Reservar" (contacto WhatsApp/teléfono). Sin carga de reserva online por ahora. |
 | Turnos fijos / abonados | Sí, desde el MVP. |
 | Recargo por mora | Configurable, apagado por defecto (queda a criterio del dueño). |
 | Alta de socios | Doble vía: los crea administración **y** auto-registro por el portal (queda pendiente de aprobación). Beneficios de socio (descuentos, sorteos) = más adelante. |
@@ -56,10 +57,17 @@ confirma con el usuario antes de pasar a la siguiente.
 - Pantalla "Ficha de socio / Cuenta corriente". Refactor de la pantalla de Cobros.
 
 ### Fase 4 — Reservas · Calendario · Turnos fijos
-- Migración `reserva` (estados con hold, seña, tipo, origen) + tabla `abono`.
-- Reglas socio vs. no-socio; liberación automática de reservas provisorias vencidas.
+- Migración `reserva` (estados, tipo suelta/fija, origen, monto de pago) + tabla `abono`.
+- Socio: reserva sin pago adelantado → el alquiler queda como cargo en su cuenta corriente.
+- No socio: solo recepción, cobra el 100% al confirmar (medio de pago a elección).
 - Calendario visual por cancha; alta de reserva desde el calendario.
 - Turnos fijos: alta de abono → genera reservas semanales + cuota mensual.
+
+### Fase 4b — Landing pública
+- Página `/` pública (fuera del dashboard): presentación, deportes y canchas,
+  grilla de disponibilidad de horarios (lectura), CTA "Soy socio" → portal y
+  "Reservar" → contacto (WhatsApp/teléfono configurable).
+- El dashboard pasa a `/panel` o `/app`; la raíz queda para la landing.
 
 ### Fase 5 — Control de acceso (QR / DNI)
 - Carnet con QR (portal + imprimible). Check-in por cámara o DNI.
