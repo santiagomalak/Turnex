@@ -11,37 +11,34 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
 import { formatMoney, formatDateOnly } from '@/lib/format'
 import type { CuotaConPersona } from '@/lib/repos/cuota'
 import type { MovimientoConPersona } from '@/lib/repos/movimiento'
-import { generarCuotasAction, marcarVencidasAction } from './actions'
+import { correrTareasAction, marcarVencidasAction } from './actions'
 
 type Deudor = { persona_id: string; nombre: string; apellido: string; deuda: number; vencida: number }
-
-const mesLabel = (periodo: string) => {
-  const [y, m] = periodo.split('-')
-  return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
-}
 
 export function CobrosClient({
   cuotas,
   deudores,
   movimientos,
-  periodo,
 }: {
   cuotas: CuotaConPersona[]
   deudores: Deudor[]
   movimientos: MovimientoConPersona[]
-  periodo: string
 }) {
   const router = useRouter()
   const [tab, setTab] = useState<'cuotas' | 'deudores' | 'historial'>('cuotas')
   const [aviso, setAviso] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null)
   const [pending, start] = useTransition()
 
-  function generar() {
+  function correrTareas() {
     setAviso(null)
     start(async () => {
-      const res = await generarCuotasAction(periodo)
+      const res = await correrTareasAction()
       if (res.ok) {
-        setAviso({ tipo: 'ok', texto: `${res.data.generadas} cuota(s) generada(s) para ${mesLabel(periodo)}.` })
+        const r = res.data
+        setAviso({
+          tipo: 'ok',
+          texto: `Cuotas de membresía: ${r.cuotasMembresia} · cuotas de abono: ${r.cuotasAbono} · marcadas vencidas: ${r.cuotasVencidas} · turnos fijos generados: ${r.reservasAbono}.`,
+        })
         router.refresh()
       } else setAviso({ tipo: 'error', texto: res.error })
     })
@@ -96,8 +93,8 @@ export function CobrosClient({
                 <Button variant="outline" size="sm" onClick={marcarVencidas} loading={pending}>
                   Marcar vencidas
                 </Button>
-                <Button size="sm" onClick={generar} loading={pending}>
-                  Generar cuotas de {mesLabel(periodo)}
+                <Button size="sm" onClick={correrTareas} loading={pending} title="Genera las cuotas del mes (membresía y abonos), marca vencidas y extiende los turnos fijos. Corre igual solo cada día.">
+                  Actualizar cuotas del mes
                 </Button>
               </div>
             </CardHeader>

@@ -3,7 +3,7 @@ import { query, db as defaultDb, type Db } from '@/lib/db'
 import type { Cuota, EstadoCuota } from '@/lib/types'
 
 const COLS =
-  'id, persona_id, periodo, monto, estado, fecha_vencimiento, plan_pago_id, concepto, movimiento_id'
+  'id, persona_id, periodo, monto, estado, fecha_vencimiento, plan_pago_id, abono_id, concepto, movimiento_id'
 
 const prefixed = (alias: string) =>
   COLS.split(',')
@@ -50,7 +50,8 @@ export async function sociosSinCuotaDelPeriodo(
      join plan_membresia pm on pm.id = p.plan_membresia_id
      where p.rol = 'socio' and p.estado = 'activo' and pm.activo
        and not exists (
-         select 1 from cuota c where c.persona_id = p.id and c.periodo = $1::date
+         select 1 from cuota c
+         where c.persona_id = p.id and c.periodo = $1::date and c.abono_id is null
        )`,
     [periodo]
   )
@@ -65,12 +66,13 @@ export async function insertCuota(
     fechaVencimiento: string
     concepto: string | null
     planPagoId?: string | null
+    abonoId?: string | null
   },
   db: Db = defaultDb
 ): Promise<Cuota> {
   const { rows } = await db.query<Cuota>(
-    `insert into cuota (persona_id, periodo, monto, fecha_vencimiento, concepto, plan_pago_id, estado)
-     values ($1, $2, $3, $4, $5, $6, 'pendiente')
+    `insert into cuota (persona_id, periodo, monto, fecha_vencimiento, concepto, plan_pago_id, abono_id, estado)
+     values ($1, $2, $3, $4, $5, $6, $7, 'pendiente')
      returning ${COLS}`,
     [
       data.personaId,
@@ -79,9 +81,29 @@ export async function insertCuota(
       data.fechaVencimiento,
       data.concepto,
       data.planPagoId ?? null,
+      data.abonoId ?? null,
     ]
   )
   return rows[0]
+}
+
+/** Abonos activos que todavía no tienen cuota para `periodo`. */
+export async function abonosSinCuotaDelPeriodo(periodo: string): Promise<
+  { abono_id: string; persona_id: string; monto: number; concepto: string }[]
+> {
+  const { rows } = await query<{ abono_id: string; persona_id: string; monto: number; concepto: string }>(
+    `select a.id as abono_id, a.persona_id, a.precio_mensual as monto,
+            'Abono ' || e.nombre || ' (' ||
+              (array['dom','lun','mar','mié','jue','vie','sáb'])[a.dia_semana + 1] || ' ' ||
+              to_char(a.hora_inicio, 'HH24:MI') || ')' as concepto
+     from abono a
+     join espacio e on e.id = a.espacio_id
+     where a.estado = 'activo'
+       and (a.vigente_hasta is null or a.vigente_hasta >= $1::date)
+       and not exists (select 1 from cuota c where c.abono_id = a.id and c.periodo = $1::date)`,
+    [periodo]
+  )
+  return rows
 }
 
 export async function setCuotaMovimiento(

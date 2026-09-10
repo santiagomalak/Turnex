@@ -3,7 +3,8 @@ import { z } from 'zod'
 import { tx } from '@/lib/db'
 import * as abonoRepo from '@/lib/repos/abono'
 import * as reservaRepo from '@/lib/repos/reserva'
-import * as mov from '@/lib/repos/movimiento'
+import { crearCuotaConCargo, sumarDias } from '@/lib/services/cuota'
+import { getConfigNumber } from '@/lib/config'
 import { getPersona } from '@/lib/repos/persona'
 import { getEspacio } from '@/lib/repos/espacio'
 
@@ -115,20 +116,19 @@ export async function crearAbono(
       }
     }
 
-    // Primer mes del abono como cargo en la cuenta corriente.
+    // Primera cuota mensual del abono (el cron la renueva mes a mes).
     if (data.precio_mensual > 0) {
-      await mov.insertCargo(
-        {
-          personaId: data.persona_id,
-          direccion: 'ingreso',
-          tipo: 'alquiler',
-          monto: data.precio_mensual,
-          concepto: `Abono ${espacio.nombre} (${dia} ${data.hora_inicio})`,
-          venceEl: data.vigente_desde,
-          registradoPor,
-        },
-        db
-      )
+      const dias = await getConfigNumber('cuota.dias_para_vencer')
+      const periodo = data.vigente_desde.slice(0, 8) + '01'
+      await crearCuotaConCargo(db, {
+        personaId: data.persona_id,
+        periodo,
+        monto: data.precio_mensual,
+        concepto: `Abono ${espacio.nombre} (${dia} ${data.hora_inicio}) — ${periodo.slice(0, 7)}`,
+        venceEl: sumarDias(data.vigente_desde, Number.isFinite(dias) ? dias : 10),
+        registradoPor,
+        abonoId: abono.id,
+      })
     }
 
     return { abonoId: abono.id, reservasCreadas: creadas, reservasConflicto: conflicto }

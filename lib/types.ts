@@ -82,6 +82,7 @@ export type Cuota = {
   estado: EstadoCuota
   fecha_vencimiento: string
   plan_pago_id: string | null
+  abono_id: string | null
   concepto: string | null
   movimiento_id: string | null
 }

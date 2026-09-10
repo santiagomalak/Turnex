@@ -1,8 +1,7 @@
 import 'server-only'
 import { z } from 'zod'
 import { tx, query } from '@/lib/db'
-import * as cuotaRepo from '@/lib/repos/cuota'
-import * as mov from '@/lib/repos/movimiento'
+import { crearCuotaConCargo } from '@/lib/services/cuota'
 import type { PlanPago } from '@/lib/types'
 
 const numero = (v: unknown) => {
@@ -56,33 +55,15 @@ export async function crearPlanPago(
     const plan = rows[0]
 
     for (let i = 0; i < data.cant_cuotas; i++) {
-      const venc = addMonths(data.primer_vencimiento, i)
-      const concepto = `${data.descripcion} (${i + 1}/${data.cant_cuotas})`
-      const c = await cuotaRepo.insertCuota(
-        {
-          personaId,
-          periodo: null,
-          monto: montos[i],
-          fechaVencimiento: venc,
-          concepto,
-          planPagoId: plan.id,
-        },
-        db
-      )
-      const cargo = await mov.insertCargo(
-        {
-          personaId,
-          direccion: 'ingreso',
-          tipo: 'cuota',
-          monto: montos[i],
-          concepto,
-          venceEl: venc,
-          cuotaId: c.id,
-          registradoPor,
-        },
-        db
-      )
-      await cuotaRepo.setCuotaMovimiento(c.id, cargo.id, db)
+      await crearCuotaConCargo(db, {
+        personaId,
+        periodo: null,
+        monto: montos[i],
+        concepto: `${data.descripcion} (${i + 1}/${data.cant_cuotas})`,
+        venceEl: addMonths(data.primer_vencimiento, i),
+        registradoPor,
+        planPagoId: plan.id,
+      })
     }
     return plan
   })
