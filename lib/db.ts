@@ -29,7 +29,9 @@ function createPool(): Pool {
   }
   return new Pool({
     connectionString,
-    max: 10,
+    // En serverless (Vercel) cada instancia abre su propio pool y hay muchas
+    // instancias: pocas conexiones por pool. En local, más para poder testear.
+    max: process.env.VERCEL ? 3 : 10,
     idleTimeoutMillis: 30_000,
     connectionTimeoutMillis: 10_000,
     // Supabase exige TLS; el certificado del pooler no siempre encadena a una CA local.
