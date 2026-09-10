@@ -9,6 +9,7 @@ export type Dashboard = {
   deudaVencida: number
   cuotasPendientes: number
   cuotasVencidas: number
+  sociosPendientes: number
   reservasHoy: number
   canchasActivas: number
   personasDentro: number
@@ -45,6 +46,7 @@ export async function getDashboard(): Promise<Dashboard> {
     pagos,
     ocupacion,
     mantenimiento,
+    sociosPendientes,
   ] = await Promise.all([
     query<{ activos: number }>(
       "select count(*)::int as activos from persona where rol = 'socio' and estado = 'activo'"
@@ -112,6 +114,9 @@ export async function getDashboard(): Promise<Dashboard> {
        order by e.nombre`
     ),
     query<{ nombre: string }>("select nombre from espacio where estado = 'mantenimiento'"),
+    query<{ n: number }>(
+      "select count(*)::int as n from persona where rol = 'socio' and estado = 'pendiente_aprobacion'"
+    ),
   ])
 
   const alertas: Dashboard['alertas'] = []
@@ -132,6 +137,13 @@ export async function getDashboard(): Promise<Dashboard> {
   for (const m of mantenimiento.rows) {
     alertas.push({ tipo: 'mantenimiento', mensaje: `${m.nombre} está en mantenimiento`, prioridad: 'media' })
   }
+  if (sociosPendientes.rows[0].n > 0) {
+    alertas.push({
+      tipo: 'socios_pendientes',
+      mensaje: `${sociosPendientes.rows[0].n} solicitud(es) de socio esperando aprobación`,
+      prioridad: 'media',
+    })
+  }
 
   return {
     sociosActivos: socios.rows[0].activos,
@@ -140,6 +152,7 @@ export async function getDashboard(): Promise<Dashboard> {
     deudaVencida: deuda.rows[0].vencida,
     cuotasPendientes: cuotas.rows[0].pendientes,
     cuotasVencidas: cuotas.rows[0].vencidas,
+    sociosPendientes: sociosPendientes.rows[0].n,
     reservasHoy: reservasHoy.rows[0].n,
     canchasActivas: canchas.rows[0].n,
     personasDentro: dentro.rows[0].n,

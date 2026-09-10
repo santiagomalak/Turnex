@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { requireStaff } from '@/lib/auth'
 import { getDashboard } from '@/lib/services/dashboard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -5,6 +6,13 @@ import { Badge } from '@/components/ui/Badge'
 import { Alert } from '@/components/ui/Alert'
 import { formatMoney, formatDateOnly } from '@/lib/format'
 import { RefreshButton } from './refresh-button'
+
+const alertaHref: Record<string, string> = {
+  cuotas_vencidas: '/cobros',
+  morosos: '/cobros',
+  socios_pendientes: '/socios-pendientes',
+  mantenimiento: '/espacios',
+}
 
 export const dynamic = 'force-dynamic'
 
@@ -72,11 +80,24 @@ export default async function DashboardPage() {
               <p className="text-center py-8 text-zinc-500 dark:text-zinc-400">Sin alertas</p>
             ) : (
               <div className="space-y-2">
-                {d.alertas.map((a, i) => (
-                  <Alert key={i} variant={a.prioridad === 'alta' ? 'danger' : a.prioridad === 'media' ? 'warning' : 'info'} className="text-sm">
-                    {a.mensaje}
-                  </Alert>
-                ))}
+                {d.alertas.map((a, i) => {
+                  const href = alertaHref[a.tipo]
+                  const alerta = (
+                    <Alert
+                      variant={a.prioridad === 'alta' ? 'danger' : a.prioridad === 'media' ? 'warning' : 'info'}
+                      className={`text-sm ${href ? 'transition-opacity hover:opacity-80' : ''}`}
+                    >
+                      {a.mensaje}
+                    </Alert>
+                  )
+                  return href ? (
+                    <Link key={i} href={href} className="block">
+                      {alerta}
+                    </Link>
+                  ) : (
+                    <div key={i}>{alerta}</div>
+                  )
+                })}
               </div>
             )}
           </CardContent>

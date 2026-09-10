@@ -24,6 +24,7 @@ const navigation: NavItem[] = [
   { href: '/cobros', label: 'Cobros', icon: <PaymentIcon />, roles: ['admin', 'recepcion', 'cobranzas'] },
   { href: '/caja', label: 'Caja', icon: <CajaIcon />, roles: ['admin', 'recepcion', 'cobranzas'] },
   { href: '/accesos', label: 'Accesos', icon: <AccessIcon />, roles: ['admin', 'recepcion'] },
+  { href: '/socios-pendientes', label: 'Solicitudes', icon: <SolicitudIcon />, roles: ['admin', 'recepcion'] },
 ];
 
 function DashboardIcon() {
@@ -50,11 +51,14 @@ function PaymentIcon() {
 function CajaIcon() {
   return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>;
 }
+function SolicitudIcon() {
+  return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h9m5-4l2 2 4-4"/></svg>;
+}
 function AccessIcon() {
   return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>;
 }
 
-export function Sidebar({ rol }: { rol: StaffRol }) {
+export function Sidebar({ rol, sociosPendientes = 0 }: { rol: StaffRol; sociosPendientes?: number }) {
   const pathname = usePathname();
   const items = navigation.filter((item) => item.roles.includes(rol));
 
@@ -83,6 +87,11 @@ export function Sidebar({ rol }: { rol: StaffRol }) {
               >
                 <span className="flex-shrink-0">{item.icon}</span>
                 <span className="truncate">{item.label}</span>
+                {item.href === '/socios-pendientes' && sociosPendientes > 0 && (
+                  <span className="ml-auto flex-shrink-0 rounded-full bg-red-600 px-1.5 py-0.5 text-xs font-semibold text-white">
+                    {sociosPendientes}
+                  </span>
+                )}
               </Link>
             );
           })}

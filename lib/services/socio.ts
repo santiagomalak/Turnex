@@ -1,8 +1,11 @@
 import 'server-only'
 import { z } from 'zod'
+import { tx } from '@/lib/db'
 import * as personaRepo from '@/lib/repos/persona'
 import { getPlan } from '@/lib/repos/plan'
 import { estadoDeCuenta } from '@/lib/services/cuenta-corriente'
+import { crearCuotaConCargo, periodoActual, sumarDias } from '@/lib/services/cuota'
+import { getConfigNumber } from '@/lib/config'
 import { listCuotas } from '@/lib/repos/cuota'
 import { createAdminClient } from '@/lib/supabase/admin'
 import type { Persona, PlanMembresia } from '@/lib/types'
@@ -70,6 +73,78 @@ export async function registrarSolicitudSocio(
     // Si falla el alta de la persona, borro el usuario de Auth para no dejar huérfanos.
     await admin.auth.admin.deleteUser(authUserId).catch(() => {})
     throw err
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Aprobación de socios que se registraron por el portal
+// ---------------------------------------------------------------------------
+
+export const listarSociosPendientes = personaRepo.listSociosPendientes
+export const contarSociosPendientes = personaRepo.contarSociosPendientes
+
+/**
+ * Aprueba un socio pendiente: le asigna un plan, lo pasa a `activo` y
+ * (opcional) le genera la cuota de membresía del mes en curso.
+ */
+export async function aprobarSocio(data: {
+  personaId: string
+  planId: string
+  generarPrimeraCuota: boolean
+  registradoPor: string | null
+}): Promise<{ cuotaGenerada: boolean }> {
+  const persona = await personaRepo.getPersona(data.personaId)
+  if (!persona) throw new Error('La persona no existe')
+  if (persona.estado !== 'pendiente_aprobacion') {
+    throw new Error('Esta solicitud ya no está pendiente')
+  }
+  const plan = await getPlan(data.planId)
+  if (!plan || !plan.activo) throw new Error('El plan elegido no existe o no está activo')
+
+  const dias = await getConfigNumber('cuota.dias_para_vencer')
+  const diasVenc = Number.isFinite(dias) ? dias : 10
+  const periodo = periodoActual()
+  const mmYYYY = `${periodo.slice(5, 7)}/${periodo.slice(0, 4)}`
+
+  return tx(async (db) => {
+    await db.query(`update persona set estado = 'activo', plan_membresia_id = $2 where id = $1`, [
+      data.personaId,
+      data.planId,
+    ])
+
+    if (!data.generarPrimeraCuota) return { cuotaGenerada: false }
+
+    const { rows } = await db.query<{ n: number }>(
+      `select count(*)::int as n from cuota
+       where persona_id = $1 and periodo = $2::date and abono_id is null`,
+      [data.personaId, periodo]
+    )
+    if (rows[0].n > 0) return { cuotaGenerada: false }
+
+    await crearCuotaConCargo(db, {
+      personaId: data.personaId,
+      periodo,
+      monto: plan.precio_mensual,
+      concepto: `Cuota ${mmYYYY}`,
+      venceEl: sumarDias(periodo, diasVenc),
+      registradoPor: data.registradoPor,
+    })
+    return { cuotaGenerada: true }
+  })
+}
+
+/** Rechaza una solicitud: borra la persona pendiente y su usuario de Auth. */
+export async function rechazarSocio(personaId: string): Promise<void> {
+  const persona = await personaRepo.getPersona(personaId)
+  if (!persona) throw new Error('La persona no existe')
+  if (persona.estado !== 'pendiente_aprobacion') {
+    throw new Error('Solo se puede rechazar una solicitud pendiente')
+  }
+  await personaRepo.deletePersona(personaId)
+  if (persona.auth_user_id) {
+    await createAdminClient()
+      .auth.admin.deleteUser(persona.auth_user_id)
+      .catch(() => {})
   }
 }
 

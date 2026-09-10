@@ -1,4 +1,5 @@
 import { requireStaff } from '@/lib/auth';
+import { contarSociosPendientes } from '@/lib/services/socio';
 import { Sidebar } from '@/components/Sidebar';
 import { LogoutButton } from '@/components/LogoutButton';
 
@@ -11,10 +12,12 @@ const rolLabel: Record<string, string> = {
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const staff = await requireStaff();
+  const sociosPendientes =
+    staff.rol === 'admin' || staff.rol === 'recepcion' ? await contarSociosPendientes() : 0;
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar rol={staff.rol} />
+      <Sidebar rol={staff.rol} sociosPendientes={sociosPendientes} />
       <main className="flex-1 flex flex-col overflow-hidden ml-64">
         <header className="h-16 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-700 px-6 flex items-center justify-between">
           <h1 className="text-xl font-semibold text-zinc-900 dark:text-white">Turnex</h1>

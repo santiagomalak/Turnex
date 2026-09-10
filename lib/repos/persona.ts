@@ -145,3 +145,21 @@ export async function insertSocioAutoRegistrado(data: {
 export async function vincularAuthUser(personaId: string, authUserId: string): Promise<void> {
   await query(`update persona set auth_user_id = $1 where id = $2`, [authUserId, personaId])
 }
+
+/** Socios que se registraron por el portal y esperan aprobación (más nuevos primero). */
+export async function listSociosPendientes(): Promise<Persona[]> {
+  const { rows } = await query<Persona>(
+    `select ${COLS} from persona
+     where rol = 'socio' and estado = 'pendiente_aprobacion'
+     order by fecha_alta desc`
+  )
+  return rows
+}
+
+export async function contarSociosPendientes(): Promise<number> {
+  const { rows } = await query<{ n: number }>(
+    `select count(*)::int as n from persona
+     where rol = 'socio' and estado = 'pendiente_aprobacion'`
+  )
+  return rows[0]?.n ?? 0
+}
