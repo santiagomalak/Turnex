@@ -1,214 +1,33 @@
-'use client'
+import { requireStaff } from '@/lib/auth'
+import { personasDentro, historialAccesos } from '@/lib/services/acceso'
+import { listPersonas } from '@/lib/repos/persona'
+import { AccesosClient } from './accesos-client'
 
-import { useState, useEffect } from 'react'
-import { store } from '@/lib/store-supabase'
-import { Table } from '@/components/ui/Table'
-import { Modal } from '@/components/ui/Modal'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
-import { Badge } from '@/components/ui/Badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Alert } from '@/components/ui/Alert'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/Tabs'
-import type { AccesoLog, Persona, UsuarioStaff } from '@/lib/types-supabase'
+export const dynamic = 'force-dynamic'
 
-function formatDate(date: Date) { return date.toISOString().split('T')[0] }
+export default async function AccesosPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ desde?: string; hasta?: string; persona?: string }>
+}) {
+  await requireStaff(['admin', 'recepcion'])
+  const sp = await searchParams
+  const hoy = new Date().toISOString().slice(0, 10)
+  const desde = sp.desde ?? hoy
+  const hasta = sp.hasta ?? hoy
 
-export default function AccesosPage() {
-  const [accesos, setAccesos] = useState<AccesoLog[]>([])
-  const [personas, setPersonas] = useState<Persona[]>([])
-  const [staff, setStaff] = useState<UsuarioStaff[]>([])
-  const [activeTab, setActiveTab] = useState<'checkin' | 'log'>('checkin')
-  const [searchDni, setSearchDni] = useState('')
-  const [foundPersona, setFoundPersona] = useState<Persona | null>(null)
-  const [checkinLoading, setCheckinLoading] = useState(false)
-  const [lastAction, setLastAction] = useState<{ type: 'entry' | 'exit'; persona: Persona } | null>(null)
-  const [filterFechaDesde, setFilterFechaDesde] = useState(formatDate(new Date()))
-  const [filterFechaHasta, setFilterFechaHasta] = useState(formatDate(new Date()))
-  const [filterPersonaId, setFilterPersonaId] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [personasDentro, setPersonasDentro] = useState<Array<{ persona: Persona; acceso: AccesoLog; hrs: number; mins: number }>>([])
-
-  useEffect(() => { refresh(); loadPersonas(); loadStaff() }, [])
-  // refresh() arma "personas dentro" a partir del state `personas`, que se carga
-  // por separado: al llegar, recalculamos para que la tarjeta no quede vacía.
-  useEffect(() => { if (personas.length > 0) refresh() }, [personas])
-
-  const loadPersonas = async () => {
-    try { const data = await store.getPersonas(); setPersonas(data.filter(p => p.estado === 'activo')) } catch (err) { console.error('Error loading personas:', err) }
-  }
-
-  const loadStaff = async () => {
-    try { const data = await store.getUsuariosStaff(); setStaff(data) } catch (err) { console.error('Error loading staff:', err) }
-  }
-
-  const refresh = async () => {
-    try {
-      const [accesosData, abiertos] = await Promise.all([
-        store.getAccesos({ personaId: filterPersonaId || undefined, fechaDesde: filterFechaDesde, fechaHasta: filterFechaHasta }),
-        store.getAccesos().then(a => a.filter(x => !x.hora_salida))
-      ])
-      setAccesos(accesosData)
-      setPersonasDentro(abiertos.map(acceso => {
-        const persona = personas.find(p => p.id === acceso.persona_id)
-        if (!persona) return null
-        const duracion = Date.now() - new Date(acceso.hora_entrada).getTime()
-        const hrs = Math.floor(duracion / 3600000)
-        const mins = Math.floor((duracion % 3600000) / 60000)
-        return { persona, acceso, hrs, mins }
-      }).filter(Boolean) as Array<{ persona: Persona; acceso: AccesoLog; hrs: number; mins: number }>)
-    } catch (err) { console.error('Error loading accesos:', err) }
-    finally { setLoading(false) }
-  }
-
-  const handleDniSearch = () => {
-    const persona = personas.find(p => p.dni === searchDni.trim())
-    setFoundPersona(persona || null)
-    if (!persona) {
-      setLastAction({ type: 'entry', persona: { id: '', nombre: 'No encontrado', apellido: '', dni: searchDni, email: '', telefono: '', rol: 'invitado', estado: 'inactivo', fecha_alta: '', plan_membresia_id: null } })
-    }
-  }
-
-  const handleCheckin = async (tipo: 'entry' | 'exit') => {
-    if (!foundPersona) return
-    setCheckinLoading(true)
-    try {
-      const registradoPor = staff[0]?.id ?? null
-      if (tipo === 'entry') {
-        await store.addAcceso({ persona_id: foundPersona.id, hora_entrada: new Date().toISOString(), hora_salida: null, registrado_por: registradoPor })
-        setLastAction({ type: 'entry', persona: foundPersona })
-      } else {
-        const accesosAbiertos = (await store.getAccesos({ personaId: foundPersona.id })).filter(a => !a.hora_salida)
-        if (accesosAbiertos.length > 0) {
-          await store.updateAcceso(accesosAbiertos[0].id, { hora_salida: new Date().toISOString() })
-          setLastAction({ type: 'exit', persona: foundPersona })
-        }
-      }
-      refresh()
-      setSearchDni('')
-      setFoundPersona(null)
-    } catch (err) { console.error('Error checkin:', err) }
-    finally { setCheckinLoading(false) }
-  }
-
-  const columns = [
-    { key: 'hora', header: 'Fecha/Hora', render: (a: AccesoLog) => new Date(a.hora_entrada).toLocaleString('es-AR') },
-    { key: 'persona', header: 'Persona', render: (a: AccesoLog) => { const p = personas.find(pe => pe.id === a.persona_id); return p ? `${p.nombre} ${p.apellido}` : a.persona_id } },
-    { key: 'dni', header: 'DNI', render: (a: AccesoLog) => { const p = personas.find(pe => pe.id === a.persona_id); return p?.dni || '—' } },
-    { key: 'entrada', header: 'Entrada', render: (a: AccesoLog) => new Date(a.hora_entrada).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) },
-    { key: 'salida', header: 'Salida', render: (a: AccesoLog) => a.hora_salida ? new Date(a.hora_salida).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : <Badge variant="warning">Dentro</Badge> },
-    { key: 'duracion', header: 'Duración', render: (a: AccesoLog) => { if (!a.hora_salida) return <span className="text-zinc-400">—</span>; const diff = new Date(a.hora_salida).getTime() - new Date(a.hora_entrada).getTime(); const hrs = Math.floor(diff / 3600000); const mins = Math.floor((diff % 3600000) / 60000); return `${hrs}h ${mins}m` } },
-    { key: 'registrado', header: 'Registrado por', render: (a: AccesoLog) => a.registrado_por },
-  ]
-
-  if (loading) return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-12 w-12 border-4 border-zinc-900 border-t-transparent"></div></div>
+  const [dentro, historial, personas] = await Promise.all([
+    personasDentro(),
+    historialAccesos({ desde, hasta, personaId: sp.persona || undefined }),
+    listPersonas(),
+  ])
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Accesos</h1>
-          <p className="text-zinc-500 dark:text-zinc-400 mt-1">Control de entrada y salida por QR/DNI</p>
-        </div>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'checkin' | 'log')}>
-        <TabsList>
-          <TabsTrigger value="checkin">Check-in / Check-out</TabsTrigger>
-          <TabsTrigger value="log">Log de Accesos</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="checkin">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card padding="md">
-              <CardHeader>
-                <CardTitle>Escáner QR / Búsqueda por DNI</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="text-center py-12 border-2 border-dashed border-zinc-300 dark:border-zinc-600 rounded-xl">
-                  <svg className="w-24 h-24 mx-auto mb-4 text-zinc-300 dark:text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                  <p className="text-lg font-medium text-zinc-700 dark:text-zinc-300">Escanear código QR</p>
-                  <p className="text-zinc-500 dark:text-zinc-400 mt-1">O ingresar DNI manualmente</p>
-                </div>
-
-                <div className="space-y-4">
-                  <Input label="DNI" value={searchDni} onChange={e => setSearchDni(e.target.value)} placeholder="30123456" onKeyDown={e => e.key === 'Enter' && handleDniSearch()} />
-                  <Button className="w-full" onClick={handleDniSearch} variant={searchDni ? 'primary' : 'outline'}>Buscar</Button>
-                </div>
-
-                {foundPersona && (
-                  <Alert variant={foundPersona.estado === 'activo' ? 'success' : foundPersona.estado === 'moroso' ? 'danger' : 'warning'} title={foundPersona.estado === 'moroso' ? '⚠️ Socio Moroso' : foundPersona.estado === 'activo' ? '✓ Socio Activo' : 'Socio Inactivo'}>
-                    <div className="space-y-1">
-                      <p className="font-medium">{foundPersona.nombre} {foundPersona.apellido}</p>
-                      <p className="text-sm">DNI: {foundPersona.dni} · {foundPersona.email}</p>
-                      {foundPersona.estado === 'moroso' && <p className="text-red-600 text-sm font-medium">Tiene cuotas vencidas. ¿Permitir ingreso?</p>}
-                    </div>
-                  </Alert>
-                )}
-
-                {foundPersona && (
-                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-zinc-200 dark:border-zinc-700">
-                    <Button size="lg" className="h-16" onClick={() => handleCheckin('entry')} disabled={checkinLoading} loading={checkinLoading && lastAction?.type === 'entry'}>
-                      <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-                      ENTRADA
-                    </Button>
-                    <Button size="lg" variant="secondary" className="h-16" onClick={() => handleCheckin('exit')} disabled={checkinLoading} loading={checkinLoading && lastAction?.type === 'exit'}>
-                      <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                      SALIDA
-                    </Button>
-                  </div>
-                )}
-
-                {lastAction && (
-                  <Alert variant={lastAction.type === 'entry' ? 'success' : 'info'} className="text-center">
-                    <p className="font-medium">{lastAction.type === 'entry' ? '✓ Entrada registrada' : '✓ Salida registrada'}</p>
-                    <p className="text-sm">{lastAction.persona.nombre} {lastAction.persona.apellido} · {new Date().toLocaleTimeString('es-AR')}</p>
-                  </Alert>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card padding="md">
-              <CardHeader>
-                <CardTitle>Personas dentro del predio</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {personasDentro.length === 0 && (
-                    <p className="text-center py-8 text-zinc-500 dark:text-zinc-400">Nadie en el predio ahora mismo</p>
-                  )}
-                  {personasDentro.map(({ persona, acceso, hrs, mins }) => (
-                    <div key={acceso.id} className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                      <div>
-                        <p className="font-medium text-green-800 dark:text-green-300">{persona.nombre} {persona.apellido}</p>
-                        <p className="text-sm text-green-600 dark:text-green-400">Entró: {new Date(acceso.hora_entrada).toLocaleTimeString('es-AR')} · Hace {hrs}h {mins}m</p>
-                      </div>
-                      <Badge variant="success">DENTRO</Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="log">
-          <Card padding="md">
-            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <CardTitle>Historial de Accesos</CardTitle>
-              <div className="flex flex-wrap gap-2">
-                <Input label="Desde" type="date" value={filterFechaDesde} onChange={e => { setFilterFechaDesde(e.target.value); refresh(); }} className="w-40" />
-                <Input label="Hasta" type="date" value={filterFechaHasta} onChange={e => { setFilterFechaHasta(e.target.value); refresh(); }} className="w-40" />
-                <Select value={filterPersonaId} onChange={(e) => { setFilterPersonaId(e.target.value); refresh(); }} options={[{ value: '', label: 'Todas las personas' }, ...personas.map(p => ({ value: p.id, label: `${p.nombre} ${p.apellido}` }))]} placeholder="Filtrar persona" className="w-56" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Table columns={columns} data={accesos} keyExtractor={a => a.id} emptyMessage="No hay accesos en el período seleccionado" />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+    <AccesosClient
+      dentro={dentro}
+      historial={historial}
+      personas={personas}
+      filtros={{ desde, hasta, persona: sp.persona ?? '' }}
+    />
   )
 }

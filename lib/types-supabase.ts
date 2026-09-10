@@ -9,6 +9,7 @@ export type Persona = {
   estado: 'activo' | 'inactivo' | 'moroso' | 'pendiente_aprobacion'
   fecha_alta: string
   plan_membresia_id: string | null
+  qr_token: string
 }
 
 export type PlanMembresia = {

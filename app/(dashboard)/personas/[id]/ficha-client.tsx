@@ -118,6 +118,16 @@ export function FichaClient({
           <Button onClick={() => { setFormError(null); setModal('pago') }}>Registrar pago</Button>
           <Button variant="outline" onClick={() => { setFormError(null); setModal('cargo') }}>Registrar cargo</Button>
           <Button variant="outline" onClick={() => { setFormError(null); setModal('plan') }}>Plan de pago</Button>
+          {persona.rol === 'socio' && (
+            <a
+              href={`/carnet/${persona.id}`}
+              target="_blank"
+              rel="noopener"
+              className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+            >
+              Carnet
+            </a>
+          )}
         </div>
       </div>
 

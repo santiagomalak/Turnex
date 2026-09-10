@@ -1,116 +1,62 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { store } from '@/lib/store-supabase'
+import { requireStaff } from '@/lib/auth'
+import { getDashboard } from '@/lib/services/dashboard'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Alert } from '@/components/ui/Alert'
-import { Button } from '@/components/ui/Button'
-import type { Alerta, Cuota, Movimiento, Persona, Espacio } from '@/lib/types-supabase'
+import { formatMoney, formatDateOnly } from '@/lib/format'
+import { RefreshButton } from './refresh-button'
 
-type Stats = Awaited<ReturnType<typeof store.getStats>>
+export const dynamic = 'force-dynamic'
 
-const statCards: { key: keyof Stats; label: string; color: string; currency?: boolean }[] = [
-  { key: 'totalSocios', label: 'Total Socios', color: 'bg-blue-500' },
-  { key: 'morosos', label: 'Morosos', color: 'bg-red-500' },
-  { key: 'cuotasPendientes', label: 'Cuotas Pendientes', color: 'bg-amber-500' },
-  { key: 'cuotasVencidas', label: 'Cuotas Vencidas', color: 'bg-red-600' },
-  { key: 'reservasHoy', label: 'Reservas Hoy', color: 'bg-green-500' },
-  { key: 'espaciosActivos', label: 'Canchas Activas', color: 'bg-purple-500' },
-  { key: 'ingresosMes', label: 'Ingresos del Mes', color: 'bg-emerald-500', currency: true },
-  { key: 'fiadoPendiente', label: 'Fiado Pendiente', color: 'bg-orange-500', currency: true },
-  { key: 'pagosStaffPendientes', label: 'A pagar a staff', color: 'bg-rose-500', currency: true },
-  { key: 'accesosHoy', label: 'Accesos Hoy', color: 'bg-indigo-500' },
-]
+const stat = (label: string, value: string | number, sub?: string, tone?: 'red' | 'green') => ({
+  label,
+  value,
+  sub,
+  tone,
+})
 
-function Icon({ color }: { color: string }) {
-  return <div className={`p-3 rounded-xl ${color} text-white`}><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
-}
+export default async function DashboardPage() {
+  const staff = await requireStaff()
+  const d = await getDashboard()
 
-export default function DashboardPage() {
-  const [stats, setStats] = useState<Stats | null>(null)
-  const [alertas, setAlertas] = useState<Alerta[]>([])
-  const [cuotasProximas, setCuotasProximas] = useState<Cuota[]>([])
-  const [ultimosPagos, setUltimosPagos] = useState<Movimiento[]>([])
-  const [ocupacion, setOcupacion] = useState<{ espacio: Espacio; ocupacion: number }[]>([])
-  const [nombrePorPersona, setNombrePorPersona] = useState<Record<string, string>>({})
-  const [loading, setLoading] = useState(true)
-
-  const nombrePersona = (id: string) => nombrePorPersona[id] ?? 'Persona sin identificar'
-
-  const formatCurrency = (value: number) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', minimumFractionDigits: 0 }).format(value)
-
-  async function loadData() {
-    setLoading(true)
-    try {
-      const [s, a, cp, up, occ, personas] = await Promise.all([
-        store.getStats(),
-        store.getAlertas(true),
-        store.getCuotas({ estado: 'pendiente' }),
-        store.getMovimientos(),
-        store.getEspacios(),
-        store.getPersonas(),
-      ])
-      setStats(s)
-      setAlertas(a)
-      setCuotasProximas(cp.slice(0, 5))
-      setUltimosPagos(up.filter(m => m.direccion === 'ingreso' && m.estado === 'pagado').slice(0, 5))
-      setNombrePorPersona(Object.fromEntries(personas.map(p => [p.id, `${p.nombre} ${p.apellido}`])))
-
-      // Calcular ocupación de hoy
-      const hoy = new Date().toISOString().split('T')[0]
-      const ocupacionData = await Promise.all(
-        occ.filter(e => e.estado === 'activa').map(async (espacio) => {
-          const reservas = await store.getReservas({ fecha: hoy, espacioId: espacio.id })
-          const confirmadas = reservas.filter(r => r.estado === 'confirmada').length
-          const totalHoras = 14
-          const ocupacion = Math.round((confirmadas / totalHoras) * 100)
-          return { espacio, ocupacion }
-        })
-      )
-      setOcupacion(ocupacionData)
-    } catch (err) {
-      console.error('Error loading dashboard:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    loadData()
-    const interval = setInterval(loadData, 30000)
-    return () => clearInterval(interval)
-  }, [])
-
-  if (loading || !stats) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-zinc-900 border-t-transparent"></div>
-      </div>
-    )
-  }
+  const cards = [
+    stat('Socios activos', d.sociosActivos),
+    stat('Con deuda vencida', d.sociosConDeudaVencida, undefined, d.sociosConDeudaVencida > 0 ? 'red' : undefined),
+    stat('Deuda en cuenta corriente', formatMoney(d.deudaTotal), `${formatMoney(d.deudaVencida)} vencida`, d.deudaVencida > 0 ? 'red' : undefined),
+    stat('Cuotas pendientes', d.cuotasPendientes, `${d.cuotasVencidas} vencidas`),
+    stat('Reservas hoy', d.reservasHoy),
+    stat('Canchas activas', d.canchasActivas),
+    stat('Dentro del predio', d.personasDentro, `${d.accesosHoy} accesos hoy`),
+    stat('Ingresos del mes', formatMoney(d.ingresosMes), `${formatMoney(d.egresosMes)} egresos`, 'green'),
+  ]
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Dashboard</h1>
-          <p className="text-zinc-500 dark:text-zinc-400 mt-1">Vista general del complejo deportivo</p>
+          <p className="text-zinc-500 dark:text-zinc-400 mt-1">Hola {staff.nombre ?? staff.email}</p>
         </div>
-        <Button onClick={loadData} variant="outline" size="sm">Actualizar</Button>
+        <RefreshButton />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8 gap-4">
-        {statCards.map(card => (
-          <Card key={card.key} padding="md">
-            <CardContent className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">{card.label}</p>
-                <p className="text-2xl font-bold text-zinc-900 dark:text-white mt-1">
-                  {card.currency ? formatCurrency(stats[card.key as keyof typeof stats] as number) : stats[card.key as keyof typeof stats]}
-                </p>
-              </div>
-              <Icon color={card.color} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {cards.map((c) => (
+          <Card key={c.label} padding="md">
+            <CardContent>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">{c.label}</p>
+              <p
+                className={`text-2xl font-bold mt-1 ${
+                  c.tone === 'red'
+                    ? 'text-red-600 dark:text-red-400'
+                    : c.tone === 'green'
+                    ? 'text-green-600 dark:text-green-400'
+                    : 'text-zinc-900 dark:text-white'
+                }`}
+              >
+                {c.value}
+              </p>
+              {c.sub && <p className="text-xs text-zinc-400 mt-1">{c.sub}</p>}
             </CardContent>
           </Card>
         ))}
@@ -119,49 +65,42 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2" padding="md">
           <CardHeader>
-            <CardTitle>Alertas Recientes</CardTitle>
+            <CardTitle>Alertas</CardTitle>
           </CardHeader>
           <CardContent>
-            {alertas.length === 0 ? (
-              <div className="text-center py-8 text-zinc-500 dark:text-zinc-400">
-                <svg className="w-12 h-12 mx-auto mb-3 text-zinc-300 dark:text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <p>No hay alertas pendientes</p>
-              </div>
+            {d.alertas.length === 0 ? (
+              <p className="text-center py-8 text-zinc-500 dark:text-zinc-400">Sin alertas</p>
             ) : (
-              <div className="space-y-3 max-h-96 overflow-y-auto">
-                {alertas.slice(0, 10).map(alerta => (
-                  <Alert
-                    key={alerta.id}
-                    variant={alerta.prioridad === 'critica' || alerta.prioridad === 'alta' ? 'danger' : alerta.prioridad === 'media' ? 'warning' : 'info'}
-                    title={alerta.tipo.replace(/_/g, ' ').toUpperCase()}
-                    dismissible
-                    onDismiss={() => { /* store.marcarAlertaLeida */ setAlertas(prev => prev.filter(a => a.id !== alerta.id)) }}
-                    className="text-sm"
-                  >
-                    {alerta.mensaje}
+              <div className="space-y-2">
+                {d.alertas.map((a, i) => (
+                  <Alert key={i} variant={a.prioridad === 'alta' ? 'danger' : a.prioridad === 'media' ? 'warning' : 'info'} className="text-sm">
+                    {a.mensaje}
                   </Alert>
                 ))}
               </div>
             )}
-            <div className="mt-4 flex justify-end">
-              <Button variant="ghost" size="sm" onClick={() => { /* store.marcarTodasLeidas */ }}>Marcar todas como leídas</Button>
-            </div>
           </CardContent>
         </Card>
 
         <Card padding="md">
           <CardHeader>
-            <CardTitle>Próximos Vencimientos</CardTitle>
+            <CardTitle>Próximos vencimientos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {cuotasProximas.map(cuota => (
-                <div key={cuota.id} className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-zinc-900 dark:text-white">{nombrePersona(cuota.persona_id)}</p>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">Vence {cuota.fecha_vencimiento} · {formatCurrency(cuota.monto)}</p>
+            <div className="space-y-2">
+              {d.proximosVencimientos.length === 0 && (
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">Sin cuotas pendientes</p>
+              )}
+              {d.proximosVencimientos.map((v, i) => (
+                <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate text-zinc-900 dark:text-white">{v.persona}</p>
+                    <p className="text-xs text-zinc-500">{v.concepto} · {formatDateOnly(v.fecha_vencimiento)}</p>
                   </div>
-                  <Badge variant={new Date(cuota.fecha_vencimiento) < new Date() ? 'danger' : 'warning'}>{new Date(cuota.fecha_vencimiento) < new Date() ? 'Vencida' : 'Pendiente'}</Badge>
+                  <div className="text-right pl-2">
+                    <p className="text-sm font-medium">{formatMoney(v.saldo)}</p>
+                    {v.vencida && <Badge variant="danger" size="sm">vencida</Badge>}
+                  </div>
                 </div>
               ))}
             </div>
@@ -172,38 +111,40 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card padding="md">
           <CardHeader>
-            <CardTitle>Ocupación de Canchas (Hoy)</CardTitle>
+            <CardTitle>Ocupación de canchas (hoy)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {ocupacion.map(({ espacio, ocupacion }) => (
-                <div key={espacio.id}>
+              {d.ocupacionHoy.map((o) => (
+                <div key={o.espacio}>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="font-medium">{espacio.nombre}</span>
-                    <span className="text-zinc-500 dark:text-zinc-400">{ocupacion}%</span>
+                    <span className="font-medium">{o.espacio}</span>
+                    <span className="text-zinc-500">{o.reservas} turnos · {o.porcentaje}%</span>
                   </div>
                   <div className="h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
-                    <div className="h-full bg-zinc-900 dark:bg-white rounded-full transition-all" style={{ width: `${ocupacion}%` }} />
+                    <div className="h-full bg-zinc-900 dark:bg-white rounded-full" style={{ width: `${o.porcentaje}%` }} />
                   </div>
                 </div>
               ))}
+              {d.ocupacionHoy.length === 0 && <p className="text-sm text-zinc-500">Sin canchas activas</p>}
             </div>
           </CardContent>
         </Card>
 
         <Card padding="md">
           <CardHeader>
-            <CardTitle>Últimos Pagos</CardTitle>
+            <CardTitle>Últimos pagos</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
-              {ultimosPagos.map(mov => (
-                <div key={mov.id} className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+            <div className="space-y-2">
+              {d.ultimosPagos.length === 0 && <p className="text-sm text-zinc-500">Sin pagos registrados</p>}
+              {d.ultimosPagos.map((p, i) => (
+                <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/50">
                   <div>
-                    <p className="font-medium text-zinc-900 dark:text-white">{nombrePersona(mov.persona_id)}</p>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">{mov.tipo} · {mov.medio_pago}</p>
+                    <p className="text-sm font-medium text-zinc-900 dark:text-white">{p.persona}</p>
+                    <p className="text-xs text-zinc-500">{formatDateOnly(p.fecha)} · {p.medio ?? '—'}</p>
                   </div>
-                  <span className="font-semibold text-green-600 dark:text-green-400">{formatCurrency(mov.monto)}</span>
+                  <span className="text-sm font-semibold text-green-600 dark:text-green-400">{formatMoney(p.monto)}</span>
                 </div>
               ))}
             </div>

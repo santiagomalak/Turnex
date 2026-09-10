@@ -217,6 +217,21 @@ export async function anularCargo(cargoId: string): Promise<void> {
   })
 }
 
+/** Resumen rápido de deuda de una persona (para el check-in). */
+export async function resumenDeudaPersona(
+  personaId: string
+): Promise<{ total: number; vencida: number }> {
+  const { rows } = await query<{ total: number; vencida: number }>(
+    `select coalesce(sum(saldo), 0) as total,
+            coalesce(sum(saldo) filter (where vence_el is not null and vence_el < current_date), 0) as vencida
+     from movimiento
+     where persona_id = $1 and clase = 'cargo' and direccion = 'ingreso'
+       and saldo > 0 and not anulado`,
+    [personaId]
+  )
+  return rows[0] ?? { total: 0, vencida: 0 }
+}
+
 // Deudores: personas con saldo pendiente (para la vista de cuenta corriente).
 export async function listarDeudores(): Promise<
   { persona_id: string; nombre: string; apellido: string; deuda: number; vencida: number }[]

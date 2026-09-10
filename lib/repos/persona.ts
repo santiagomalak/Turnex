@@ -5,7 +5,7 @@ import type { Persona, RolPersona, EstadoPersona } from '@/lib/types-supabase'
 // Acceso a datos de `persona` — SQL puro, sin lógica de negocio.
 
 const COLS =
-  'id, nombre, apellido, dni, email, telefono, rol, estado, fecha_alta, plan_membresia_id'
+  'id, nombre, apellido, dni, email, telefono, rol, estado, fecha_alta, plan_membresia_id, qr_token'
 
 export async function listPersonas(filtro?: {
   rol?: RolPersona
@@ -46,6 +46,18 @@ export async function getPersona(id: string): Promise<Persona | null> {
 
 export async function getPersonaByDni(dni: string): Promise<Persona | null> {
   const { rows } = await query<Persona>(`select ${COLS} from persona where dni = $1`, [dni])
+  return rows[0] ?? null
+}
+
+/** Busca por DNI exacto o por qr_token (lo que tipea el lector o el escáner). */
+export async function buscarPersonaParaAcceso(valor: string): Promise<Persona | null> {
+  const v = valor.trim()
+  if (!v) return null
+  const esUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)
+  const { rows } = await query<Persona>(
+    `select ${COLS} from persona where dni = $1 ${esUuid ? 'or qr_token = $1::uuid' : ''} limit 1`,
+    [v]
+  )
   return rows[0] ?? null
 }
 
