@@ -6,9 +6,6 @@ import { query } from '@/lib/db'
 // Se cachea por request (React.cache) para no ir a la base en cada acceso.
 
 export type ConfigKey =
-  | 'reserva.sena_porcentaje'
-  | 'reserva.hold_horas_no_socio'
-  | 'reserva.socio_reserva_directo'
   | 'cuota.dia_generacion'
   | 'cuota.dias_para_vencer'
   | 'mora.habilitada'

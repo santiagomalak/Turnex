@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { generarCuotasDelMes, marcarCuotasVencidas, periodoActual } from '@/lib/services/cuota'
+import { generarCuotasDelMes, marcarCuotasVencidas } from '@/lib/services/cuota'
 import { ok, fail, fromDbError, type ActionResult } from '@/lib/action-result'
 import { staffPuede } from '@/lib/auth'
 
@@ -31,8 +31,4 @@ export async function marcarVencidasAction(): Promise<ActionResult<{ marcadas: n
   } catch (err) {
     return fromDbError(err)
   }
-}
-
-export async function periodoActualAction(): Promise<string> {
-  return periodoActual()
 }

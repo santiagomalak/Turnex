@@ -10,8 +10,7 @@
     "migrate:up": "node-pg-migrate up --envPath .env.local",
     "migrate:down": "node-pg-migrate down --envPath .env.local",
     "migrate:create": "node-pg-migrate create --envPath .env.local -j sql",
-    "seed:auth": "node --conditions=react-server --env-file=.env.local --import tsx scripts/seed-auth.ts",
-    "seed:cuentas": "node --conditions=react-server --env-file=.env.local --import tsx scripts/seed-cuentas.ts"
+    "seed": "node --conditions=react-server --env-file=.env.local --import tsx scripts/seed.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.6",

@@ -1,6 +1,6 @@
 import 'server-only'
 import { query } from '@/lib/db'
-import type { AccesoLog } from '@/lib/types-supabase'
+import type { AccesoLog } from '@/lib/types'
 
 const COLS = 'id, persona_id, hora_entrada, hora_salida, registrado_por'
 

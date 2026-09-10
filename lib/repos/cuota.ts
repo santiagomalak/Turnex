@@ -1,6 +1,6 @@
 import 'server-only'
 import { query, db as defaultDb, type Db } from '@/lib/db'
-import type { Cuota, EstadoCuota } from '@/lib/types-supabase'
+import type { Cuota, EstadoCuota } from '@/lib/types'
 
 const COLS =
   'id, persona_id, periodo, monto, estado, fecha_vencimiento, plan_pago_id, concepto, movimiento_id'

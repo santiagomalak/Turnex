@@ -2,7 +2,7 @@ import 'server-only'
 import * as repo from '@/lib/repos/acceso'
 import { buscarPersonaParaAcceso } from '@/lib/repos/persona'
 import { resumenDeudaPersona } from '@/lib/services/cuenta-corriente'
-import type { Persona } from '@/lib/types-supabase'
+import type { Persona } from '@/lib/types'
 
 export const personasDentro = repo.accesosAbiertos
 export const historialAccesos = repo.historialAccesos

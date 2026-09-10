@@ -1,6 +1,6 @@
 import 'server-only'
 import { query } from '@/lib/db'
-import type { Espacio } from '@/lib/types-supabase'
+import type { Espacio } from '@/lib/types'
 
 const COLS = 'id, nombre, tipo, precio_por_hora, estado, sector'
 

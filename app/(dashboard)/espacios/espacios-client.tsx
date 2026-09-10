@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Alert } from '@/components/ui/Alert'
 import { formatMoney } from '@/lib/format'
-import type { Espacio, TipoEspacio } from '@/lib/types-supabase'
+import type { Espacio, TipoEspacio } from '@/lib/types'
 import { guardarEspacioAction, eliminarEspacioAction } from './actions'
 
 const tiposOptions = [

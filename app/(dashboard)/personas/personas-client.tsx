@@ -11,7 +11,7 @@ import { Select } from '@/components/ui/Select'
 import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Alert } from '@/components/ui/Alert'
-import type { Persona, PlanMembresia, RolPersona, EstadoPersona } from '@/lib/types-supabase'
+import type { Persona, PlanMembresia, RolPersona, EstadoPersona } from '@/lib/types'
 import { guardarPersonaAction, eliminarPersonaAction } from './actions'
 
 const rolesOptions = [

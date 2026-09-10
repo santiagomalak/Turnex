@@ -1,6 +1,6 @@
 import 'server-only'
 import { query } from '@/lib/db'
-import type { PlanMembresia } from '@/lib/types-supabase'
+import type { PlanMembresia } from '@/lib/types'
 
 const COLS = 'id, nombre, precio_mensual, incluye_canchas, descuento_porcentaje, activo'
 

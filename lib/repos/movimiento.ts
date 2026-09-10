@@ -1,6 +1,6 @@
 import 'server-only'
 import { query, db as defaultDb, type Db } from '@/lib/db'
-import type { Movimiento, DireccionMov, TipoMov, MedioPago } from '@/lib/types-supabase'
+import type { Movimiento, DireccionMov, TipoMov, MedioPago } from '@/lib/types'
 
 const COLS = `id, persona_id, cuota_id, reserva_id, clase, tipo, monto, saldo,
   medio_pago, comprobante_url, registrado_por, fecha, vence_el, estado, direccion,

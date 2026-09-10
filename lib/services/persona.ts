@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import * as repo from '@/lib/repos/persona'
-import type { Persona } from '@/lib/types-supabase'
+import type { Persona } from '@/lib/types'
 
 // Reglas de negocio de personas: validación + orquestación sobre el repo.
 

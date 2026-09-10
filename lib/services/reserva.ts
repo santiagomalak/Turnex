@@ -6,7 +6,7 @@ import * as mov from '@/lib/repos/movimiento'
 import { getPersona } from '@/lib/repos/persona'
 import { getEspacio } from '@/lib/repos/espacio'
 import { getPlan } from '@/lib/repos/plan'
-import type { Persona, PlanMembresia } from '@/lib/types-supabase'
+import type { Persona, PlanMembresia } from '@/lib/types'
 
 export const listarReservas = reservaRepo.listReservas
 

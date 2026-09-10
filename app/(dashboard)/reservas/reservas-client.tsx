@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Table } from '@/components/ui/Table'
 import { Alert } from '@/components/ui/Alert'
 import { formatMoney, formatDateOnly } from '@/lib/format'
-import type { Espacio, Persona } from '@/lib/types-supabase'
+import type { Espacio, Persona } from '@/lib/types'
 import type { ReservaConDetalle } from '@/lib/repos/reserva'
 import { crearReservaAction, cancelarReservaAction, marcarEstadoReservaAction } from './actions'
 

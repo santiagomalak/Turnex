@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { tx, query } from '@/lib/db'
 import * as cuotaRepo from '@/lib/repos/cuota'
 import * as mov from '@/lib/repos/movimiento'
-import type { PlanPago } from '@/lib/types-supabase'
+import type { PlanPago } from '@/lib/types'
 
 const numero = (v: unknown) => {
   if (typeof v === 'number') return v

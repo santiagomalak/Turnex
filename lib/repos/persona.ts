@@ -1,6 +1,6 @@
 import 'server-only'
 import { query } from '@/lib/db'
-import type { Persona, RolPersona, EstadoPersona } from '@/lib/types-supabase'
+import type { Persona, RolPersona, EstadoPersona } from '@/lib/types'
 
 // Acceso a datos de `persona` — SQL puro, sin lógica de negocio.
 

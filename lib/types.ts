@@ -1,3 +1,5 @@
+// Tipos de las filas de la base (snake_case, como las devuelve `pg`).
+
 export type Persona = {
   id: string
   nombre: string
@@ -149,18 +151,6 @@ export type UsuarioStaff = {
   email: string
   rol: 'admin' | 'recepcion' | 'cobranzas' | 'profesor'
   activo: boolean
-}
-
-export type Alerta = {
-  id: string
-  tipo: 'vencimiento_cuota' | 'moroso' | 'reserva_proxima' | 'espacio_mantenimiento' | 'cupo_lleno'
-  mensaje: string
-  persona_id: string | null
-  espacio_id: string | null
-  reserva_id: string | null
-  fecha: string
-  leida: boolean
-  prioridad: 'baja' | 'media' | 'alta' | 'critica'
 }
 
 export type RolPersona = Persona['rol']

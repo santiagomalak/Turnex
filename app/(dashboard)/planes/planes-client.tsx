@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/Badge'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Alert } from '@/components/ui/Alert'
 import { formatMoney } from '@/lib/format'
-import type { PlanMembresia } from '@/lib/types-supabase'
+import type { PlanMembresia } from '@/lib/types'
 import { guardarPlanAction, eliminarPlanAction } from './actions'
 
 type FormError = { error: string; fieldErrors?: Record<string, string> }

@@ -2,7 +2,7 @@ import 'server-only'
 import { tx, query } from '@/lib/db'
 import * as mov from '@/lib/repos/movimiento'
 import * as cuotaRepo from '@/lib/repos/cuota'
-import type { Movimiento, DireccionMov, MedioPago, TipoMov } from '@/lib/types-supabase'
+import type { Movimiento, DireccionMov, MedioPago, TipoMov } from '@/lib/types'
 
 // ============================================================================
 // Estado de cuenta de una persona

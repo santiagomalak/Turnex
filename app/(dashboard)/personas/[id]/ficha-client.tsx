@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Table } from '@/components/ui/Table'
 import { Alert } from '@/components/ui/Alert'
 import { formatMoney, formatDateOnly } from '@/lib/format'
-import type { Persona, PlanMembresia, Movimiento, PlanPago } from '@/lib/types-supabase'
+import type { Persona, PlanMembresia, Movimiento, PlanPago } from '@/lib/types'
 import type { EstadoDeCuenta } from '@/lib/services/cuenta-corriente'
 import {
   registrarPagoAction,

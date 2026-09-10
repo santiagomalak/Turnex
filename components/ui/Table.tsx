@@ -55,7 +55,7 @@ export function Table<T>({ columns, data, keyExtractor, onRowClick, emptyMessage
             >
               {columns.map(col => (
                 <td key={col.key} className={`px-4 py-3 text-zinc-900 dark:text-zinc-100 ${col.className || ''}`}>
-                  {col.render ? col.render(row) : (row as any)[col.key]}
+                  {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? '')}
                 </td>
               ))}
             </tr>
