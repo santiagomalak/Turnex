@@ -25,7 +25,7 @@ declare global {
 function createPool(): Pool {
   const connectionString = process.env.DATABASE_URL
   if (!connectionString) {
-    throw new Error('DATABASE_URL no está definida. Revisá .env.local (ver SETUP.md §5).')
+    throw new Error('DATABASE_URL no está definida (ver README, sección "Puesta en marcha").')
   }
   return new Pool({
     connectionString,
@@ -39,10 +39,13 @@ function createPool(): Pool {
   })
 }
 
-// En dev, Next recarga módulos en cada cambio: guardamos el pool en `global`
-// para no abrir una conexión nueva por cada hot-reload.
-export const pool: Pool = global._pgPool ?? createPool()
-if (process.env.NODE_ENV !== 'production') global._pgPool = pool
+// El pool se crea perezosamente (en la primera query), no al importar el módulo:
+// así el build no falla en rutas que solo tocan la base en runtime.
+// En dev, Next recarga módulos en cada cambio: lo guardamos en `global`.
+function getPool(): Pool {
+  if (!global._pgPool) global._pgPool = createPool()
+  return global._pgPool
+}
 
 /**
  * Ejecuta una query SQL directa.
@@ -53,7 +56,7 @@ export async function query<T extends QueryResultRow = QueryResultRow>(
   text: string,
   params?: unknown[]
 ) {
-  return pool.query<T>(text, params)
+  return getPool().query<T>(text, params)
 }
 
 /**
@@ -81,7 +84,7 @@ export const db: Db = { query }
  *   })
  */
 export async function tx<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     await client.query('begin')
     const result = await fn(client)
