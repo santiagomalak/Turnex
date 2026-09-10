@@ -5,7 +5,7 @@ import type { Persona, RolPersona, EstadoPersona } from '@/lib/types'
 // Acceso a datos de `persona` — SQL puro, sin lógica de negocio.
 
 const COLS =
-  'id, nombre, apellido, dni, email, telefono, rol, estado, fecha_alta, plan_membresia_id, qr_token'
+  'id, nombre, apellido, dni, email, telefono, rol, estado, fecha_alta, plan_membresia_id, qr_token, auth_user_id'
 
 export async function listPersonas(filtro?: {
   rol?: RolPersona
@@ -115,4 +115,33 @@ export async function updatePersona(id: string, data: PersonaInput): Promise<Per
 
 export async function deletePersona(id: string): Promise<void> {
   await query('delete from persona where id = $1', [id])
+}
+
+export async function getPersonaByAuthUser(authUserId: string): Promise<Persona | null> {
+  const { rows } = await query<Persona>(`select ${COLS} from persona where auth_user_id = $1`, [
+    authUserId,
+  ])
+  return rows[0] ?? null
+}
+
+/** Alta de un socio que se auto-registra por el portal (queda pendiente de aprobación). */
+export async function insertSocioAutoRegistrado(data: {
+  nombre: string
+  apellido: string
+  dni: string
+  email: string | null
+  telefono: string | null
+  authUserId: string
+}): Promise<Persona> {
+  const { rows } = await query<Persona>(
+    `insert into persona (nombre, apellido, dni, email, telefono, rol, estado, auth_user_id)
+     values ($1, $2, $3, $4, $5, 'socio', 'pendiente_aprobacion', $6)
+     returning ${COLS}`,
+    [data.nombre, data.apellido, data.dni, data.email, data.telefono, data.authUserId]
+  )
+  return rows[0]
+}
+
+export async function vincularAuthUser(personaId: string, authUserId: string): Promise<void> {
+  await query(`update persona set auth_user_id = $1 where id = $2`, [authUserId, personaId])
 }

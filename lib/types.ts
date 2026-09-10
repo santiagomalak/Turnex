@@ -12,6 +12,7 @@ export type Persona = {
   fecha_alta: string
   plan_membresia_id: string | null
   qr_token: string
+  auth_user_id: string | null
 }
 
 export type PlanMembresia = {

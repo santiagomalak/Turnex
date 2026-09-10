@@ -68,7 +68,8 @@ export type ResultadoReserva = {
 
 export async function crearReserva(
   data: ReservaParsed,
-  registradoPor: string | null
+  registradoPor: string | null,
+  origen: 'recepcion' | 'portal' = 'recepcion'
 ): Promise<ResultadoReserva> {
   const persona = await getPersona(data.persona_id)
   if (!persona) throw new Error('La persona no existe')
@@ -101,7 +102,7 @@ export async function crearReserva(
         estado: esSocio || cobrarAhora ? 'confirmada' : 'pendiente_pago',
         precio,
         senaPagada: cobrarAhora,
-        origen: 'recepcion',
+        origen,
         creadaPor: registradoPor,
         notas: data.notas,
       },

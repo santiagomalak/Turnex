@@ -44,9 +44,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (user && (path === '/login' || path === '/portal/login')) {
+  // Si ya hay sesión y entra a /login, lo mando al panel. Para /portal/login NO
+  // hago esto acá: la página decide (puede ser un staff sin cuenta de socio).
+  if (user && path === '/login') {
     const url = request.nextUrl.clone()
-    url.pathname = path === '/portal/login' ? '/portal' : '/dashboard'
+    url.pathname = '/dashboard'
     url.search = ''
     return NextResponse.redirect(url)
   }
