@@ -1,11 +1,11 @@
 # Turnex
 
 Sistema de gestión para un complejo deportivo: **socios y cuentas corrientes, cuotas,
-reservas de canchas, turnos fijos (abonos), control de acceso y cobros**.
+reservas de canchas, turnos fijos (abonos), control de acceso, cobros, caja diaria y
+portal del socio**.
 
 Pensado para que lo use el staff (administración, recepción, cobranzas) desde el día de
-apertura, y crecer sin reescribir: portal del socio, kiosco/caja y MercadoPago vienen
-después.
+apertura, y crecer sin reescribir: la landing pública y MercadoPago vienen después.
 
 Plan por fases y estado: **[`ROADMAP.md`](ROADMAP.md)**. Modelo de datos y decisiones de
 arquitectura: **[`PROJECT.md`](PROJECT.md)**.
@@ -37,6 +37,9 @@ lib/
   services/*       Reglas de negocio + validación con Zod
 app/
   (dashboard)/*    Panel del staff. Cada módulo: page.tsx (server) + *-client.tsx + actions.ts
+                   (personas, planes, espacios, reservas, abonos, cobros, caja, accesos)
+  portal/*         Portal del socio: login/registro y (socio)/ con las páginas con sesión
+                   (inicio, cuenta, carnet, reservar)
   api/cron/        Endpoint que dispara Vercel Cron
   carnet/[id]/     Carnet imprimible con QR (solo socios)
   login/           Login del staff
@@ -107,10 +110,10 @@ npm run dev             # http://localhost:3000
 
 | Email | Rol | Ve |
 |---|---|---|
-| `admin@turnex.com` | Administración | Todo |
+| `admin@turnex.com` | Administración | Todo el panel |
 | `recepcion@turnex.com` | Recepción | Todo menos Planes |
-| `cobranzas@turnex.com` | Cobranzas | Dashboard, Personas, Cobros |
-| `socio@turnex.com` | Socio (portal, próximamente) | — |
+| `cobranzas@turnex.com` | Cobranzas | Dashboard, Personas, Cobros, Caja |
+| `socio@turnex.com` | Socio | Portal del socio (`/portal`) |
 
 ---
 

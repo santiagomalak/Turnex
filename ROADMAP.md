@@ -30,6 +30,11 @@ con portal para el socio. Preparado para MercadoPago y multi-cliente, sin constr
 Cada fase se construye, se prueba (`tsc` + `build` + prueba manual), se commitea, y se
 confirma con el usuario antes de pasar a la siguiente.
 
+**Estado (2026-09-10):** Fases 0–7 implementadas. Pendientes: **4b** (landing pública,
+se dejó para el final) y **8** (hardening + deploy productivo — falta pasar el
+`DATABASE_URL` de Vercel al Session Pooler de Supabase y activar la protección de
+contraseñas filtradas).
+
 ### Fase 0 — Fundaciones (sin features nuevas visibles)
 - `lib/db.ts` endurecido (SSL, pool acotado, helper de transacción).
 - Capa `lib/repos/*` (SQL puro, `server-only`) + `lib/services/*` (reglas de negocio).
