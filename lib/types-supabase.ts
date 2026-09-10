@@ -29,6 +29,13 @@ export type Espacio = {
   sector: string | null
 }
 
+export type EstadoReserva =
+  | 'confirmada'
+  | 'pendiente_pago'
+  | 'cancelada'
+  | 'cumplida'
+  | 'ausente'
+
 export type Reserva = {
   id: string
   espacio_id: string
@@ -36,9 +43,29 @@ export type Reserva = {
   fecha: string
   hora_inicio: string
   hora_fin: string
-  estado: 'confirmada' | 'cancelada' | 'pendiente_pago'
+  estado: EstadoReserva
   precio: number
   sena_pagada: boolean
+  creado_en: string
+  origen: 'recepcion' | 'portal' | 'abono'
+  abono_id: string | null
+  creada_por: string | null
+  movimiento_id: string | null
+  notas: string | null
+}
+
+export type Abono = {
+  id: string
+  persona_id: string
+  espacio_id: string
+  dia_semana: number
+  hora_inicio: string
+  hora_fin: string
+  precio_mensual: number
+  vigente_desde: string
+  vigente_hasta: string | null
+  estado: 'activo' | 'pausado' | 'cancelado'
+  creado_por: string | null
   creado_en: string
 }
 
@@ -139,7 +166,6 @@ export type RolPersona = Persona['rol']
 export type EstadoPersona = Persona['estado']
 export type TipoEspacio = Espacio['tipo']
 export type EstadoEspacio = Espacio['estado']
-export type EstadoReserva = Reserva['estado']
 export type RolStaff = UsuarioStaff['rol']
 
 // Alias de compatibilidad (páginas viejas todavía client-side)

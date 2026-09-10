@@ -12,9 +12,9 @@ types.setTypeParser(20, (v) => (v === null ? null : Number.parseInt(v, 10))) // 
 // Fechas/horas como string (no `Date`), para que el resto del código las trate
 // igual que cuando venían por JSON. `date` y `time` quedan tal cual las manda
 // Postgres ('YYYY-MM-DD', 'HH:MM:SS'); los timestamps se normalizan a ISO.
-types.setTypeParser(1082, (v) => v) // date
-types.setTypeParser(1083, (v) => v) // time
-types.setTypeParser(1266, (v) => v) // timetz
+types.setTypeParser(1082, (v) => v) // date -> 'YYYY-MM-DD'
+types.setTypeParser(1083, (v) => v.slice(0, 5)) // time -> 'HH:MM'
+types.setTypeParser(1266, (v) => v.slice(0, 5)) // timetz -> 'HH:MM'
 types.setTypeParser(1114, (v) => new Date(v.replace(' ', 'T') + 'Z').toISOString()) // timestamp (asumimos UTC)
 types.setTypeParser(1184, (v) => new Date(v).toISOString()) // timestamptz
 
