@@ -66,8 +66,12 @@ npm install
 Creá `.env.local` en la raíz (**no se sube a git**):
 
 ```dotenv
-# Postgres de Supabase — Settings → Database → Connection string (URI)
-DATABASE_URL=postgresql://postgres:TU_PASSWORD@db.TU_REF.supabase.co:5432/postgres
+# Postgres de Supabase — Settings → Database → "Connect"
+# Local (o cualquier red con IPv6): conexión directa
+#   postgresql://postgres:TU_PASSWORD@db.TU_REF.supabase.co:5432/postgres
+# Vercel u otra red IPv4: OBLIGATORIO el Session Pooler (la directa es IPv6-only)
+#   postgresql://postgres.TU_REF:TU_PASSWORD@aws-0-<region>.pooler.supabase.com:5432/postgres
+DATABASE_URL=...
 
 # Settings → API
 NEXT_PUBLIC_SUPABASE_URL=https://TU_REF.supabase.co
@@ -147,28 +151,20 @@ curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron
 
 El proyecto ya está enlazado (`.vercel/`). Para publicarlo:
 
-1. **Variables de entorno** (una vez) — desde la raíz del proyecto, con la CLI logueada:
+1. **`DATABASE_URL` con el Session Pooler.** Vercel es IPv4-only y la conexión
+   directa de Supabase es IPv6-only → hay que usar el pooler. `bash scripts/usar-pooler.sh`
+   hace el cambio en `.env.local` y en Vercel.
 
-   ```bash
-   for k in DATABASE_URL NEXT_PUBLIC_SUPABASE_URL NEXT_PUBLIC_SUPABASE_ANON_KEY \
-            SUPABASE_SECRET_KEY CRON_SECRET; do
-     v=$(grep "^$k=" .env.local | cut -d= -f2-)
-     printf '%s' "$v" | vercel env add "$k" production
-   done
-   ```
+2. **El resto de las variables de entorno** — `bash scripts/setup-vercel-env.sh`
+   (lee `.env.local` y las carga en production + preview), o a mano en
+   Vercel → Project → Settings → Environment Variables.
 
-   (o cargalas a mano en Vercel → Project → Settings → Environment Variables)
+3. **Deployment Protection** — Settings → Deployment Protection → apagar el toggle
+   "Require Log In" de *Vercel Authentication* (para que se pueda ver sin cuenta de Vercel).
 
-2. **Deploy**:
+4. **Deploy**: `vercel redeploy` (o cualquier push a `main`, que dispara auto-deploy).
 
-   ```bash
-   vercel --prod
-   ```
-
-3. **Post-deploy en Supabase**:
-   - Authentication → Policies → activar **"Leaked password protection"**
-   - Si el tráfico crece, cambiar `DATABASE_URL` a la conexión *pooler en modo sesión*
-     (Supabase → Database → Connection pooling)
+5. **En Supabase**: Authentication → Policies → activar **"Leaked password protection"**.
 
 > Cuando el complejo confirme el acuerdo, la idea es crear un proyecto de Supabase
 > **nuevo y separado** para producción. Todo el esquema vive en `migrations/`, así que
