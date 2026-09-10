@@ -62,6 +62,13 @@ async function upsertPlanes() {
        where not exists (select 1 from plan_membresia where nombre = $1)`,
       [nombre, precio, incluye, desc]
     )
+    // Sincroniza los valores por si el plan ya existía con otra config.
+    await query(
+      `update plan_membresia
+         set precio_mensual = $2, incluye_canchas = $3, descuento_porcentaje = $4, activo = true
+       where nombre = $1`,
+      [nombre, precio, incluye, desc]
+    )
   }
   const { rows } = await query<{ id: string; nombre: string }>(
     'select id, nombre from plan_membresia'
