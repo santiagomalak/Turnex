@@ -152,22 +152,24 @@ curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron
 
 ## Deploy en Vercel
 
-El proyecto ya está enlazado (`.vercel/`). Para publicarlo:
+**En producción**: <https://turnex-gold.vercel.app> — auto-deploy en cada push a `main`.
+
+Puesta a punto (ya hecha, queda como referencia):
 
 1. **`DATABASE_URL` con el Session Pooler.** Vercel es IPv4-only y la conexión
-   directa de Supabase es IPv6-only → hay que usar el pooler. `bash scripts/usar-pooler.sh`
-   hace el cambio en `.env.local` y en Vercel.
+   directa de Supabase (`db.<ref>.supabase.co`) es IPv6-only → hay que usar el pooler
+   (`aws-0-sa-east-1.pooler.supabase.com:5432`, usuario `postgres.<ref>`).
+   `bash scripts/usar-pooler.sh` hace el cambio en `.env.local` y en Vercel.
 
-2. **El resto de las variables de entorno** — `bash scripts/setup-vercel-env.sh`
-   (lee `.env.local` y las carga en production + preview), o a mano en
-   Vercel → Project → Settings → Environment Variables.
+2. **El resto de las variables de entorno** en Production: `NEXT_PUBLIC_SUPABASE_URL`,
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SECRET_KEY`, `CRON_SECRET`.
+   `bash scripts/setup-vercel-env.sh` las carga desde `.env.local`.
 
 3. **Deployment Protection** — Settings → Deployment Protection → apagar el toggle
-   "Require Log In" de *Vercel Authentication* (para que se pueda ver sin cuenta de Vercel).
+   "Require Log In" de *Vercel Authentication*.
 
-4. **Deploy**: `vercel redeploy` (o cualquier push a `main`, que dispara auto-deploy).
-
-5. **En Supabase**: Authentication → Policies → activar **"Leaked password protection"**.
+4. **Pendiente (1 clic del dueño)**: en Supabase → Authentication → Policies, activar
+   **"Leaked password protection"**.
 
 > Cuando el complejo confirme el acuerdo, la idea es crear un proyecto de Supabase
 > **nuevo y separado** para producción. Todo el esquema vive en `migrations/`, así que
