@@ -11,6 +11,7 @@ export type ConfigKey =
   | 'mora.habilitada'
   | 'mora.porcentaje_mensual'
   | 'complejo.nombre'
+  | 'caja.consumidor_final_id'
 
 const loadConfig = cache(async (): Promise<Record<string, unknown>> => {
   const { rows } = await query<{ clave: string; valor: unknown }>(
