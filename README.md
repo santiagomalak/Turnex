@@ -161,15 +161,17 @@ Puesta a punto (ya hecha, queda como referencia):
    (`aws-0-sa-east-1.pooler.supabase.com:5432`, usuario `postgres.<ref>`).
    `bash scripts/usar-pooler.sh` hace el cambio en `.env.local` y en Vercel.
 
-2. **El resto de las variables de entorno** en Production: `NEXT_PUBLIC_SUPABASE_URL`,
-   `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SECRET_KEY`, `CRON_SECRET`.
-   `bash scripts/setup-vercel-env.sh` las carga desde `.env.local`.
+2. **El resto de las variables de entorno** (`NEXT_PUBLIC_SUPABASE_URL`,
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SECRET_KEY`, `CRON_SECRET`) cargadas en
+   los tres entornos (Production, Preview, Development).
 
 3. **Deployment Protection** — Settings → Deployment Protection → apagar el toggle
    "Require Log In" de *Vercel Authentication*.
 
-4. **Pendiente (1 clic del dueño)**: en Supabase → Authentication → Policies, activar
-   **"Leaked password protection"**.
+4. **`btree_gist` en el schema `extensions`** (migración `move-btree-gist-a-extensions`).
+
+5. **Pendiente (1 clic del dueño)**: en Supabase → Authentication → Providers → Email,
+   activar **"Prevent use of leaked passwords"**.
 
 > Cuando el complejo confirme el acuerdo, la idea es crear un proyecto de Supabase
 > **nuevo y separado** para producción. Todo el esquema vive en `migrations/`, así que

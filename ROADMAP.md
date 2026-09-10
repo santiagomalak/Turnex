@@ -32,10 +32,10 @@ confirma con el usuario antes de pasar a la siguiente.
 
 **Estado (2026-09-10):** Fases 0–7 implementadas y **desplegadas en producción**
 (<https://turnex-gold.vercel.app>, auto-deploy desde `main`, `DATABASE_URL` por el
-Session Pooler de Supabase, cron diario verificado). Pendientes: **4b** (landing
-pública, se dejó para el final) y el resto de **8** (activar "Leaked password
-protection" en Supabase — 1 clic del dueño; mover `btree_gist` al schema `extensions`;
-proyecto Supabase propio al cerrar con el cliente).
+Session Pooler de Supabase, cron diario verificado, env vars en los 3 entornos,
+`btree_gist` movido a `extensions`). Pendientes: **4b** (landing pública, se dejó
+para el final); activar **"Leaked password protection"** en Supabase → Auth (1 clic
+del dueño); proyecto Supabase propio al cerrar con el cliente.
 
 ### Fase 0 — Fundaciones (sin features nuevas visibles)
 - `lib/db.ts` endurecido (SSL, pool acotado, helper de transacción).
