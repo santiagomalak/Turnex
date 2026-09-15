@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { Alert } from '@/components/ui/Alert'
 import type { Persona, PlanMembresia, RolPersona, EstadoPersona } from '@/lib/types'
 import { guardarPersonaAction, eliminarPersonaAction } from './actions'
+import { useToast } from '@/hooks/useToast'
 
 const rolesOptions = [
   { value: 'socio', label: 'Socio' },
@@ -52,6 +53,7 @@ export function PersonasClient({
   planes: PlanMembresia[]
 }) {
   const router = useRouter()
+  const { success, error: toastError } = useToast()
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Persona | null>(null)
   const [rol, setRol] = useState<RolPersona>('socio')
@@ -101,6 +103,7 @@ export function PersonasClient({
       if (res.ok) {
         setModalOpen(false)
         setEditing(null)
+        success(editing ? 'Persona actualizada' : 'Persona creada')
         router.refresh()
       } else {
         setFormError({ error: res.error, fieldErrors: res.fieldErrors })
@@ -115,8 +118,12 @@ export function PersonasClient({
     startDelete(async () => {
       const res = await eliminarPersonaAction(p.id)
       setDeletingId(null)
-      if (res.ok) router.refresh()
-      else setDeleteError(res.error)
+      if (res.ok) {
+        success('Persona eliminada')
+        router.refresh()
+      } else {
+        setDeleteError(res.error)
+      }
     })
   }
 

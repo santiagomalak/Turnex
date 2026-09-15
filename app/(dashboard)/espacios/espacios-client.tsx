@@ -13,6 +13,7 @@ import { Alert } from '@/components/ui/Alert'
 import { formatMoney } from '@/lib/format'
 import type { Espacio, TipoEspacio } from '@/lib/types'
 import { guardarEspacioAction, eliminarEspacioAction } from './actions'
+import { useToast } from '@/hooks/useToast'
 
 const tiposOptions = [
   { value: 'futbol', label: 'Fútbol' },
@@ -42,6 +43,7 @@ type FormError = { error: string; fieldErrors?: Record<string, string> }
 
 export function EspaciosClient({ espacios }: { espacios: Espacio[] }) {
   const router = useRouter()
+  const { success, error: toastError } = useToast()
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Espacio | null>(null)
   const [formError, setFormError] = useState<FormError | null>(null)
@@ -83,6 +85,7 @@ export function EspaciosClient({ espacios }: { espacios: Espacio[] }) {
       if (res.ok) {
         setModalOpen(false)
         setEditing(null)
+        success(editing ? 'Cancha actualizada' : 'Cancha creada')
         router.refresh()
       } else {
         setFormError({ error: res.error, fieldErrors: res.fieldErrors })
@@ -98,10 +101,10 @@ export function EspaciosClient({ espacios }: { espacios: Espacio[] }) {
       const res = await eliminarEspacioAction(e.id)
       setDeletingId(null)
       if (res.ok) {
-        setAviso({ tipo: 'ok', texto: res.data.mensaje })
+        success(res.data.mensaje)
         router.refresh()
       } else {
-        setAviso({ tipo: 'error', texto: res.error })
+        toastError(res.error)
       }
     })
   }

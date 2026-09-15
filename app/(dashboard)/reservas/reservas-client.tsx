@@ -14,6 +14,7 @@ import { formatMoney, formatDateOnly } from '@/lib/format'
 import type { Espacio, Persona } from '@/lib/types'
 import type { ReservaConDetalle } from '@/lib/repos/reserva'
 import { crearReservaAction, cancelarReservaAction, marcarEstadoReservaAction } from './actions'
+import { useToast } from '@/hooks/useToast'
 
 const HORAS = Array.from({ length: 16 }, (_, i) => `${String(i + 7).padStart(2, '0')}:00`)
 const DIAS = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb']
@@ -48,6 +49,7 @@ export function ReservasClient({
   canchaId: string
 }) {
   const router = useRouter()
+  const { success, error: toastError } = useToast()
   const activas = useMemo(() => espacios.filter((e) => e.estado === 'activa'), [espacios])
   const canchaSel = useMemo(
     () => canchaId || activas[0]?.id || '',
@@ -90,11 +92,11 @@ export function ReservasClient({
       if (res.ok) {
         setModalOpen(false)
         if (res.data?.aCuentaCorriente) {
-          setAviso({ tipo: 'ok', texto: `Reserva confirmada. ${formatMoney(res.data.precio ?? 0)} cargados a la cuenta corriente.` })
+          success(`Reserva confirmada. ${formatMoney(res.data.precio ?? 0)} cargados a la cuenta corriente.`)
         } else if (res.data?.cobrado) {
-          setAviso({ tipo: 'ok', texto: `Reserva confirmada y cobrada (${formatMoney(res.data.precio ?? 0)}).` })
+          success(`Reserva confirmada y cobrada (${formatMoney(res.data.precio ?? 0)}).`)
         } else {
-          setAviso({ tipo: 'ok', texto: 'Reserva confirmada.' })
+          success('Reserva confirmada.')
         }
         router.refresh()
       } else {
@@ -104,11 +106,14 @@ export function ReservasClient({
   }
 
   function accionReserva(fn: () => Promise<{ ok: boolean; error?: string }>) {
-    setAviso(null)
     start(async () => {
       const res = await fn()
-      if (res.ok) router.refresh()
-      else setAviso({ tipo: 'error', texto: res.error ?? 'Error' })
+      if (res.ok) {
+        success('Estado actualizado')
+        router.refresh()
+      } else {
+        toastError(res.error ?? 'Error')
+      }
     })
   }
 

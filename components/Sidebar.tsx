@@ -24,6 +24,7 @@ const navigation: NavItem[] = [
   { href: '/cobros', label: 'Cobros', icon: <PaymentIcon />, roles: ['admin', 'recepcion', 'cobranzas'] },
   { href: '/caja', label: 'Caja', icon: <CajaIcon />, roles: ['admin', 'recepcion', 'cobranzas'] },
   { href: '/accesos', label: 'Accesos', icon: <AccessIcon />, roles: ['admin', 'recepcion'] },
+  { href: '/kiosco', label: 'Kiosco', icon: <KioscoIcon />, roles: ['admin', 'recepcion'] },
   { href: '/socios-pendientes', label: 'Solicitudes', icon: <SolicitudIcon />, roles: ['admin', 'recepcion'] },
 ];
 
@@ -57,8 +58,11 @@ function SolicitudIcon() {
 function AccessIcon() {
   return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>;
 }
+function KioscoIcon() {
+  return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v1m0 16v1m-9-9h1m16 0h1M21 12a9 9 0 11-18 0 9 9 0 0118 0zM12 9v6M8 12l4-4 4 4"/></svg>;
+}
 
-export function Sidebar({ rol, sociosPendientes = 0 }: { rol: StaffRol; sociosPendientes?: number }) {
+export function Sidebar({ rol = 'recepcion', sociosPendientes = 0 }: { rol?: StaffRol; sociosPendientes?: number }) {
   const pathname = usePathname();
   const items = navigation.filter((item) => item.roles.includes(rol));
 
