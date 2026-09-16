@@ -62,7 +62,7 @@ function KioscoIcon() {
   return <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 3v1m0 16v1m-9-9h1m16 0h1M21 12a9 9 0 11-18 0 9 9 0 0118 0zM12 9v6M8 12l4-4 4 4"/></svg>;
 }
 
-export function Sidebar({ rol = 'recepcion', sociosPendientes = 0 }: { rol?: StaffRol; sociosPendientes?: number }) {
+export function Sidebar({ rol = 'recepcion', nombre, sociosPendientes = 0 }: { rol?: StaffRol; nombre?: string; sociosPendientes?: number }) {
   const pathname = usePathname();
   const items = navigation.filter((item) => item.roles.includes(rol));
 
@@ -101,6 +101,12 @@ export function Sidebar({ rol = 'recepcion', sociosPendientes = 0 }: { rol?: Sta
           })}
         </nav>
         <div className="p-4 border-t border-zinc-200 dark:border-zinc-700">
+          {nombre && (
+            <div className="mb-3 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg">
+              <p className="text-sm font-medium text-zinc-900 dark:text-white">{nombre}</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400 capitalize">{rol}</p>
+            </div>
+          )}
           <div className="text-xs text-zinc-500 dark:text-zinc-400 text-center">
             v0.1.0
           </div>
