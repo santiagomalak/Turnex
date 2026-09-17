@@ -20,10 +20,16 @@ test.describe('Autenticación', () => {
   })
 
   test('debe redirigir a dashboard tras login exitoso', async ({ page }) => {
-    // Nota: requiere usuario real en Supabase Auth
-    // test.skip('requiere credenciales reales')
-    await page.fill('input[type="email"]', process.env.TEST_EMAIL || '')
-    await page.fill('input[type="password"]', process.env.TEST_PASSWORD || '')
+    // Skip if no test credentials provided
+    const email = process.env.TEST_EMAIL
+    const password = process.env.TEST_PASSWORD
+    
+    if (!email || !password) {
+      test.skip(true, 'TEST_EMAIL/TEST_PASSWORD no configurados - saltando test de login real')
+    }
+
+    await page.fill('input[type="email"]', email!)
+    await page.fill('input[type="password"]', password!)
     await page.click('button[type="submit"]')
     await expect(page).toHaveURL(/\/dashboard/)
   })
