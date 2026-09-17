@@ -10,9 +10,8 @@ import {
   CommandItem,
   CommandEmpty,
 } from 'cmdk'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { store } from '../lib/store-supabase'
-import type { Persona, Espacio, Reserva, Cuota } from '../lib/types-supabase'
 import {
   Search,
   Users,
@@ -21,7 +20,6 @@ import {
   CreditCard,
   LogIn,
   FileText,
-  QrCode,
 } from 'lucide-react'
 
 interface CommandItemData {
@@ -48,7 +46,6 @@ export function CommandPalette() {
   const [items, setItems] = useState<CommandItemData[]>([])
   const [loading, setLoading] = useState(false)
   const router = useRouter()
-  const pathname = usePathname()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -139,9 +136,11 @@ export function CommandPalette() {
 
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       loadData()
     }
-  }, [isOpen, loadData])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen])
 
   const filteredItems = useMemo(() => {
     return items

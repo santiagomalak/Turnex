@@ -41,9 +41,13 @@ export default function KioscoPage() {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadPersonasDentro()
-    const interval = setInterval(loadPersonasDentro, 30000)
+    const interval = setInterval(() => {
+      loadPersonasDentro()
+    }, 30000)
     return () => clearInterval(interval)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadPersonasDentro])
 
   const handleDniSearch = () => {

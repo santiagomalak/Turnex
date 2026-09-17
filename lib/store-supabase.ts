@@ -342,5 +342,5 @@ export const store = {
 }
 
 if (typeof window !== 'undefined') {
-  (window as any).__store = store
+  (window as unknown as { __store: typeof store }).__store = store
 }

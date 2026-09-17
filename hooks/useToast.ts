@@ -1,6 +1,6 @@
 'use client'
 
-import { toast, type ToastT } from 'sonner'
+import { toast } from 'sonner'
 
 type ToastType = 'success' | 'error' | 'info' | 'warning' | 'loading'
 

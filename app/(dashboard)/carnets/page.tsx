@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { store } from '@/lib/store-supabase'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
-import { Download, QrCode, Users, Printer, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Download, QrCode, Users, Printer, CheckCircle2 } from 'lucide-react'
 import { useToast } from '@/hooks/useToast'
 import type { Persona } from '@/lib/types-supabase'
 
@@ -21,24 +21,28 @@ export default function CarnetsPage() {
   const [progreso, setProgreso] = useState(0)
   const [total, setTotal] = useState(0)
   const { success, error: toastError, info } = useToast()
+  const cargadosRef = useRef(false)
 
-  useEffect(() => {
-    cargarSocios()
-  }, [])
-
-  const cargarSocios = async () => {
+  const cargarSocios = useCallback(async () => {
+    if (cargadosRef.current) return
     try {
       const data = await store.getPersonas()
       const socios = data.filter(p => p.rol === 'socio')
       setPersonas(socios)
       setSociosFiltrados(socios)
+      cargadosRef.current = true
     } catch (err) {
       console.error('Error cargando socios:', err)
       toastError('Error al cargar socios')
     }
-  }
+  }, [toastError])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    cargarSocios()
+  }, [cargarSocios])
+
+  const filtrarSocios = useCallback(() => {
     let filtrados = personas.filter(p => p.rol === 'socio')
     
     if (buscar) {
@@ -58,6 +62,11 @@ export default function CarnetsPage() {
 
     setSociosFiltrados(filtrados)
   }, [personas, buscar, filtrarEstado])
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    filtrarSocios()
+  }, [filtrarSocios])
 
   const toggleSeleccion = (id: string) => {
     setSeleccionados(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
@@ -148,7 +157,7 @@ export default function CarnetsPage() {
             />
             <select
               value={filtrarEstado}
-              onChange={e => setFiltrarEstado(e.target.value as any)}
+              onChange={e => setFiltrarEstado(e.target.value as 'todos' | 'con-qr' | 'sin-qr')}
               className="sm:w-48 px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800"
             >
               <option value="todos">Todos</option>
@@ -195,15 +204,12 @@ export default function CarnetsPage() {
           </div>
 
           {generando && (
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Generando carnets...</span>
-                <span>{progreso}%</span>
+            <Alert variant="info" className="mt-4">
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-zinc-900 border-t-transparent" />
+                <span>Generando {progreso}% ({Math.round((progreso / 100) * total)} de {total})</span>
               </div>
-              <div className="h-2 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
-                <div className="h-full bg-zinc-900 dark:bg-white rounded-full transition-all" style={{ width: `${progreso}%` }} />
-              </div>
-            </div>
+            </Alert>
           )}
         </CardContent>
       </Card>

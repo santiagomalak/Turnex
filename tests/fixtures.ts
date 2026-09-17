@@ -1,12 +1,13 @@
-import { test as base } from '@playwright/test'
+import { test as base, type Page } from '@playwright/test'
 
 type TestFixtures = {
-  authPage: void
+  authPage: Page
 }
 
 export const test = base.extend<TestFixtures>({
   authPage: async ({ page }, use) => {
-    await use()
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    await use(page)
   },
 })
 

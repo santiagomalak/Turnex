@@ -59,7 +59,7 @@ export async function POST() {
       acc[medio].total += m.monto
       acc[medio].movimientos.push(m)
       return acc
-    }, {} as Record<string, { count: number; total: number; movimientos: any[] }>)
+    }, {} as Record<string, { count: number; total: number; movimientos: unknown[] }>)
 
     // Calcular totales por tipo de movimiento
     const totalesPorTipo = (movimientos || []).reduce((acc, m) => {

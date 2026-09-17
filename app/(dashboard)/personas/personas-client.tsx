@@ -53,7 +53,7 @@ export function PersonasClient({
   planes: PlanMembresia[]
 }) {
   const router = useRouter()
-  const { success, error: toastError } = useToast()
+  const { success } = useToast()
   const [modalOpen, setModalOpen] = useState(false)
   const [editing, setEditing] = useState<Persona | null>(null)
   const [rol, setRol] = useState<RolPersona>('socio')

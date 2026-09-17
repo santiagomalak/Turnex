@@ -45,7 +45,6 @@ export async function GET(
     const primaryColor = rgb(0.1, 0.1, 0.15) // dark slate
     const accentColor = rgb(0.05, 0.45, 0.85) // blue
     const white = rgb(1, 1, 1)
-    const lightGray = rgb(0.95, 0.95, 0.97)
 
     // Fondo
     page.drawRectangle({
@@ -213,7 +212,6 @@ export async function GET(
     // Esquinas decorativas
     const cornerSize = 8
     const cornerOffset = 8
-    const lineOptions = { thickness: 2, color: accentColor }
     // Top-left
     page.drawLine({ start: { x: 5 + cornerOffset, y: height - 5 }, end: { x: 5 + cornerOffset + cornerSize, y: height - 5 }, thickness: 2, color: accentColor })
     page.drawLine({ start: { x: 5 + cornerOffset, y: height - 5 }, end: { x: 5 + cornerOffset, y: height - 5 - cornerSize }, thickness: 2, color: accentColor })
