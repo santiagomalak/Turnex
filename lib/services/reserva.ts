@@ -6,6 +6,7 @@ import * as mov from '@/lib/repos/movimiento'
 import { getPersona } from '@/lib/repos/persona'
 import { getEspacio } from '@/lib/repos/espacio'
 import { getPlan } from '@/lib/repos/plan'
+import { hoyArgentina } from '@/lib/format'
 import type { Persona, PlanMembresia } from '@/lib/types'
 
 export const listarReservas = reservaRepo.listReservas
@@ -76,7 +77,7 @@ export async function crearReserva(
   const espacio = await getEspacio(data.espacio_id)
   if (!espacio) throw new Error('La cancha no existe')
   if (espacio.estado !== 'activa') throw new Error('La cancha está en mantenimiento')
-  if (data.fecha < new Date().toISOString().slice(0, 10)) {
+  if (data.fecha < hoyArgentina()) {
     throw new Error('No se puede reservar una fecha pasada')
   }
 

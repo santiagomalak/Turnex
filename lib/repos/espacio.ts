@@ -49,7 +49,7 @@ export async function updateEspacio(id: string, data: EspacioInput): Promise<Esp
 export async function countReservasFuturas(id: string): Promise<number> {
   const { rows } = await query<{ n: number }>(
     `select count(*)::int as n from reserva
-     where espacio_id = $1 and fecha >= current_date and estado <> 'cancelada'`,
+     where espacio_id = $1 and fecha >= hoy_ar() and estado <> 'cancelada'`,
     [id]
   )
   return rows[0].n

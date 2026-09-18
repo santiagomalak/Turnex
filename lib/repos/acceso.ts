@@ -72,7 +72,7 @@ export async function registrarSalida(accesoId: string): Promise<void> {
 
 export async function contarAccesosHoy(): Promise<number> {
   const { rows } = await query<{ n: number }>(
-    `select count(*)::int as n from acceso_log where hora_entrada::date = current_date`
+    `select count(*)::int as n from acceso_log where hora_entrada::date = hoy_ar()`
   )
   return rows[0].n
 }

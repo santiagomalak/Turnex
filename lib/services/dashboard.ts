@@ -53,8 +53,8 @@ export async function getDashboard(): Promise<Dashboard> {
     ),
     query<{ total: number; vencida: number; personas_vencida: number }>(
       `select coalesce(sum(saldo), 0) as total,
-              coalesce(sum(saldo) filter (where vence_el is not null and vence_el < current_date), 0) as vencida,
-              count(distinct persona_id) filter (where vence_el is not null and vence_el < current_date) as personas_vencida
+              coalesce(sum(saldo) filter (where vence_el is not null and vence_el < hoy_ar()), 0) as vencida,
+              count(distinct persona_id) filter (where vence_el is not null and vence_el < hoy_ar()) as personas_vencida
        from movimiento
        where clase = 'cargo' and direccion = 'ingreso' and saldo > 0 and not anulado`
     ),
@@ -64,12 +64,12 @@ export async function getDashboard(): Promise<Dashboard> {
        from cuota`
     ),
     query<{ n: number }>(
-      "select count(*)::int as n from reserva where fecha = current_date and estado in ('confirmada', 'cumplida')"
+      "select count(*)::int as n from reserva where fecha = hoy_ar() and estado in ('confirmada', 'cumplida')"
     ),
     query<{ n: number }>("select count(*)::int as n from espacio where estado = 'activa'"),
     query<{ n: number }>('select count(*)::int as n from acceso_log where hora_salida is null'),
     query<{ n: number }>(
-      'select count(*)::int as n from acceso_log where hora_entrada::date = current_date'
+      'select count(*)::int as n from acceso_log where hora_entrada::date = hoy_ar()'
     ),
     query<{ ingresos: number; egresos: number }>(
       `select coalesce(sum(monto) filter (where direccion = 'ingreso'), 0) as ingresos,
@@ -89,7 +89,7 @@ export async function getDashboard(): Promise<Dashboard> {
               coalesce(c.concepto, 'Cuota ' || to_char(c.periodo, 'MM/YYYY')) as concepto,
               c.fecha_vencimiento,
               coalesce(m.saldo, c.monto) as saldo,
-              c.fecha_vencimiento < current_date as vencida
+              c.fecha_vencimiento < hoy_ar() as vencida
        from cuota c
        join persona p on p.id = c.persona_id
        left join movimiento m on m.id = c.movimiento_id and not m.anulado
@@ -108,7 +108,7 @@ export async function getDashboard(): Promise<Dashboard> {
     query<{ espacio: string; reservas: number }>(
       `select e.nombre as espacio, count(r.id)::int as reservas
        from espacio e
-       left join reserva r on r.espacio_id = e.id and r.fecha = current_date and r.estado <> 'cancelada'
+       left join reserva r on r.espacio_id = e.id and r.fecha = hoy_ar() and r.estado <> 'cancelada'
        where e.estado = 'activa'
        group by e.nombre
        order by e.nombre`

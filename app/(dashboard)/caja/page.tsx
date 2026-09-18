@@ -1,17 +1,14 @@
 import { requireStaff } from '@/lib/auth'
 import { listPersonas } from '@/lib/repos/persona'
 import { cierreDeCaja, ventasDelDia, consumidorFinalId } from '@/lib/services/caja'
+import { hoyArgentina } from '@/lib/format'
 import { CajaClient } from './caja-client'
 
 export const dynamic = 'force-dynamic'
 
-function hoyISO() {
-  return new Date().toISOString().slice(0, 10)
-}
-
 export default async function CajaPage() {
   await requireStaff(['admin', 'recepcion', 'cobranzas'])
-  const fecha = hoyISO()
+  const fecha = hoyArgentina()
 
   const cfId = await consumidorFinalId()
   const [personas, cierre, ventas] = await Promise.all([

@@ -1,7 +1,7 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 test.describe('Kiosco', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ authPage: page }) => {
     await page.goto('/kiosco')
   })
 

@@ -206,6 +206,7 @@ export function CarnetsClient({ socios }: { socios: Persona[] }) {
                       type="checkbox"
                       checked={seleccionados.includes(p.id)}
                       onChange={() => toggleSeleccion(p.id)}
+                      onClick={(e) => e.stopPropagation()}
                       className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
                     />
                     <div className="w-12 h-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">

@@ -44,9 +44,6 @@ next-env.d.ts
 CLAUDE.md
 AGENTS.md
 
-# documentation (referencia local, no para el repo)
-analisis-arquitectura-complejo-deportivo.md
-diseno-sistema-instituto-deportivo.md
-SETUP.md
-
-.vercel
+# playwright
+/test-results/
+/playwright-report/

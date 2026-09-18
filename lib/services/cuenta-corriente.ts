@@ -2,6 +2,7 @@ import 'server-only'
 import { tx, query } from '@/lib/db'
 import * as mov from '@/lib/repos/movimiento'
 import * as cuotaRepo from '@/lib/repos/cuota'
+import { hoyArgentina } from '@/lib/format'
 import type { Movimiento, DireccionMov, MedioPago, TipoMov } from '@/lib/types'
 
 // ============================================================================
@@ -17,7 +18,7 @@ export type EstadoDeCuenta = {
   cargosAbiertos: Movimiento[]
 }
 
-const hoy = () => new Date().toISOString().slice(0, 10)
+const hoy = hoyArgentina
 
 export async function estadoDeCuenta(personaId: string): Promise<EstadoDeCuenta> {
   const [movimientos, cargosIngreso, cargosEgreso] = await Promise.all([
@@ -223,7 +224,7 @@ export async function resumenDeudaPersona(
 ): Promise<{ total: number; vencida: number }> {
   const { rows } = await query<{ total: number; vencida: number }>(
     `select coalesce(sum(saldo), 0) as total,
-            coalesce(sum(saldo) filter (where vence_el is not null and vence_el < current_date), 0) as vencida
+            coalesce(sum(saldo) filter (where vence_el is not null and vence_el < hoy_ar()), 0) as vencida
      from movimiento
      where persona_id = $1 and clase = 'cargo' and direccion = 'ingreso'
        and saldo > 0 and not anulado`,
@@ -245,7 +246,7 @@ export async function listarDeudores(): Promise<
   }>(
     `select m.persona_id, p.nombre, p.apellido,
             sum(m.saldo) as deuda,
-            sum(m.saldo) filter (where m.vence_el < current_date) as vencida
+            sum(m.saldo) filter (where m.vence_el < hoy_ar()) as vencida
      from movimiento m
      join persona p on p.id = m.persona_id
      where m.clase = 'cargo' and m.direccion = 'ingreso' and m.saldo > 0 and not m.anulado

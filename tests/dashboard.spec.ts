@@ -1,23 +1,23 @@
-import { test, expect } from '@playwright/test'
+import { test, expect } from './fixtures'
 
 test.describe('Dashboard', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ authPage: page }) => {
     await page.goto('/dashboard')
   })
 
   test('debe mostrar KPIs principales', async ({ page }) => {
-    await expect(page.locator('text=Total Socios')).toBeVisible()
-    await expect(page.locator('text=Morosos')).toBeVisible()
-    await expect(page.locator('text=Cuotas Pendientes')).toBeVisible()
-    await expect(page.locator('text=Reservas Hoy')).toBeVisible()
-    await expect(page.locator('text=Ingresos del Mes')).toBeVisible()
+    await expect(page.getByText('Socios activos', { exact: true })).toBeVisible()
+    await expect(page.getByText('Con deuda vencida', { exact: true })).toBeVisible()
+    await expect(page.getByText('Cuotas pendientes', { exact: true })).toBeVisible()
+    await expect(page.getByText('Reservas hoy', { exact: true })).toBeVisible()
+    await expect(page.getByText('Ingresos del mes', { exact: true })).toBeVisible()
   })
 
   test('debe mostrar alertas', async ({ page }) => {
-    await expect(page.locator('text=Alertas Recientes')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Alertas' })).toBeVisible()
   })
 
   test('debe mostrar ocupación de canchas', async ({ page }) => {
-    await expect(page.locator('text=Ocupación de Canchas')).toBeVisible()
+    await expect(page.locator('text=Ocupación de canchas')).toBeVisible()
   })
 })

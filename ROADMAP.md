@@ -37,12 +37,25 @@ env vars en los 3 entornos, `btree_gist` movido a `extensions`). Pendientes: **4
 en Supabase → Auth (1 clic del dueño); proyecto Supabase propio al cerrar con el cliente.
 
 **Auditoría de seguridad/código (2026-09-18):** ver `git log` para el detalle.
-Fase 1 (CI arreglado, headers de seguridad, open redirect) y Fase 2 (cierre del
-hueco de toma de cuenta por DNI en el auto-registro del portal, unificación del
-acceso a datos — se dio de baja el stack cliente de Supabase y el kiosco/carnets/
-buscador global pasaron a usar `pg` server-side) ya están en `main`. Pendiente:
-Fase 3 (zona horaria UTC vs Argentina en reservas/cuotas/caja) y Fase 4 (arreglar
-los tests de Playwright, sumar tests unitarios de precios/cobros).
+Las 4 fases están en `main`:
+- **Fase 1:** CI arreglado (lockfile), headers de seguridad, open redirect.
+- **Fase 2:** cierre del hueco de toma de cuenta por DNI en el auto-registro del
+  portal; unificación del acceso a datos (se dio de baja el stack cliente de
+  Supabase, kiosco/carnets/buscador global pasaron a usar `pg` server-side).
+- **Fase 3:** función `hoy_ar()` (SQL) y `hoyArgentina()` (JS) reemplazan
+  `current_date`/`new Date().toISOString()` en todo el código server-side —
+  evita el corrimiento de un día entre las 21:00 y las 23:59 hora Argentina;
+  índice único que impide dos accesos abiertos simultáneos para la misma
+  persona (condición de carrera en check-in).
+- **Fase 4:** suite de Playwright reescrita (el fixture de auth no autenticaba
+  a nadie; los selectores estaban desactualizados) — corre en serie contra
+  datos de `npm run seed`, 24/25 tests pasan (1 se salta sin `TEST_EMAIL`/
+  `TEST_PASSWORD` reales). De paso se encontró y arregló un bug real: el
+  checkbox de `/carnets` se destildaba solo por un doble handler (fila +
+  checkbox) en el mismo click.
+
+Pendiente, no relevado en la auditoría original: tests unitarios (Vitest) para
+la lógica de precios/cobros/caja — hoy solo hay cobertura E2E.
 
 ### Fase 0 — Fundaciones (sin features nuevas visibles)
 - `lib/db.ts` endurecido (SSL, pool acotado, helper de transacción).

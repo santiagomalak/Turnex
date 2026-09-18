@@ -1,6 +1,7 @@
 import { requireStaff } from '@/lib/auth'
 import { personasDentro, historialAccesos } from '@/lib/services/acceso'
 import { listPersonas } from '@/lib/repos/persona'
+import { hoyArgentina } from '@/lib/format'
 import { AccesosClient } from './accesos-client'
 
 export const dynamic = 'force-dynamic'
@@ -12,7 +13,7 @@ export default async function AccesosPage({
 }) {
   await requireStaff(['admin', 'recepcion'])
   const sp = await searchParams
-  const hoy = new Date().toISOString().slice(0, 10)
+  const hoy = hoyArgentina()
   const desde = sp.desde ?? hoy
   const hasta = sp.hasta ?? hoy
 

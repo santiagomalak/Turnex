@@ -5,6 +5,7 @@ import { listPersonas } from '@/lib/repos/persona'
 import { listEspacios } from '@/lib/repos/espacio'
 import { listReservas } from '@/lib/repos/reserva'
 import { listCuotasPendientesConPersona } from '@/lib/repos/cuota'
+import { hoyArgentina } from '@/lib/format'
 
 export type BusquedaGlobal = {
   personas: Array<{ id: string; nombre: string; apellido: string; rol: string; estado: string; dni: string | null }>
@@ -26,7 +27,7 @@ export async function buscarGlobalAction(): Promise<BusquedaGlobal | null> {
   const staff = await staffPuede()
   if (!staff) return null
 
-  const hoy = new Date().toISOString().slice(0, 10)
+  const hoy = hoyArgentina()
   const [personas, espacios, reservasHoy, cuotasPendientes] = await Promise.all([
     listPersonas(),
     listEspacios(),

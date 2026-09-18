@@ -146,7 +146,7 @@ export async function listCuotasPendientesConPersona(): Promise<CuotaConPersona[
 export async function marcarVencidas(): Promise<number> {
   const { rowCount } = await query(
     `update cuota set estado = 'vencida'
-     where estado in ('pendiente', 'parcial') and fecha_vencimiento < current_date`
+     where estado in ('pendiente', 'parcial') and fecha_vencimiento < hoy_ar()`
   )
   return rowCount ?? 0
 }

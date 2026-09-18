@@ -7,9 +7,10 @@ import {
   marcarCuotasVencidas,
 } from '@/lib/services/cuota'
 import * as reservaRepo from '@/lib/repos/reserva'
+import { hoyArgentina } from '@/lib/format'
 
 const SEMANAS_OBJETIVO = 8
-const hoy = () => new Date().toISOString().slice(0, 10)
+const hoy = hoyArgentina
 
 /** Para cada abono activo, asegura que haya ~8 turnos futuros generados. */
 async function extenderReservasDeAbonos(): Promise<{ creadas: number }> {
@@ -28,7 +29,7 @@ async function extenderReservasDeAbonos(): Promise<{ creadas: number }> {
   let creadas = 0
   for (const a of abonos) {
     const { rows: info } = await query<{ futuras: number; ultima: string | null }>(
-      `select count(*) filter (where fecha >= current_date)::int as futuras,
+      `select count(*) filter (where fecha >= hoy_ar())::int as futuras,
               max(fecha)::text as ultima
        from reserva where abono_id = $1 and estado <> 'cancelada'`,
       [a.id]
