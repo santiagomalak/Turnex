@@ -184,8 +184,3 @@ export async function marcarEstadoReserva(
 ): Promise<void> {
   await reservaRepo.setReservaEstado(id, estado)
 }
-
-export async function cobrarSenaEnRecepcion(): Promise<void> {
-  // Placeholder: el cobro de una reserva pendiente se hace desde la ficha del socio.
-  throw new Error('Cobrá la reserva pendiente desde la ficha de la persona')
-}

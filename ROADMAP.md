@@ -1,8 +1,7 @@
 # Roadmap — Turnex (reconstrucción sobre base sólida)
 
-> Plan de trabajo acordado el 2026-09-09. Reemplaza en la práctica a la tabla de pasos
-> de `PLAN_DESARROLLO.md` §2. `PROJECT.md` sigue siendo la referencia de arquitectura y
-> modelo de datos (se actualiza a medida que se implementa).
+> Plan de trabajo acordado el 2026-09-09. El modelo de datos vive en `migrations/`
+> (única fuente de verdad — es lo que se aplica a la base real).
 
 ## Objetivo
 
@@ -31,11 +30,19 @@ Cada fase se construye, se prueba (`tsc` + `build` + prueba manual), se commitea
 confirma con el usuario antes de pasar a la siguiente.
 
 **Estado (2026-09-10):** Fases 0–7 implementadas y **desplegadas en producción**
-(<https://turnex-gold.vercel.app>, auto-deploy desde `main`, `DATABASE_URL` por el
-Session Pooler de Supabase, cron diario verificado, env vars en los 3 entornos,
-`btree_gist` movido a `extensions`). Pendientes: **4b** (landing pública, se dejó
-para el final); activar **"Leaked password protection"** en Supabase → Auth (1 clic
-del dueño); proyecto Supabase propio al cerrar con el cliente.
+(<https://turnex-gold.vercel.app>, auto-deploy desde `main` vía integración nativa
+de Vercel, `DATABASE_URL` por el Session Pooler de Supabase, cron diario verificado,
+env vars en los 3 entornos, `btree_gist` movido a `extensions`). Pendientes: **4b**
+(landing pública, se dejó para el final); activar **"Leaked password protection"**
+en Supabase → Auth (1 clic del dueño); proyecto Supabase propio al cerrar con el cliente.
+
+**Auditoría de seguridad/código (2026-09-18):** ver `git log` para el detalle.
+Fase 1 (CI arreglado, headers de seguridad, open redirect) y Fase 2 (cierre del
+hueco de toma de cuenta por DNI en el auto-registro del portal, unificación del
+acceso a datos — se dio de baja el stack cliente de Supabase y el kiosco/carnets/
+buscador global pasaron a usar `pg` server-side) ya están en `main`. Pendiente:
+Fase 3 (zona horaria UTC vs Argentina en reservas/cuotas/caja) y Fase 4 (arreglar
+los tests de Playwright, sumar tests unitarios de precios/cobros).
 
 ### Fase 0 — Fundaciones (sin features nuevas visibles)
 - `lib/db.ts` endurecido (SSL, pool acotado, helper de transacción).
@@ -90,6 +97,21 @@ del dueño); proyecto Supabase propio al cerrar con el cliente.
 - Auto-registro → `pendiente_aprobacion` → aprobación desde administración.
 
 ### Fase 8 — Hardening + deploy
-- RLS en todas las tablas, revisión de policies, security review.
+- ~~RLS en todas las tablas~~ — decisión revertida (2026-09-18): toda la app accede
+  a los datos exclusivamente vía `pg` server-side (rol `postgres`, bypassea RLS);
+  no hay ningún cliente Supabase corriendo en el browser. La seguridad se hace en
+  capas de aplicación (`lib/auth.ts` + Server Actions/Route Handlers), no en RLS.
+  RLS quedó habilitado (deny-all) en las tablas por defecto pero es irrelevante
+  para el flujo real.
 - Automatización (pg_cron o Vercel Cron): generar cuotas, marcar vencidas, liberar holds.
 - Variables en Vercel, seed de demo coherente, guía de operación.
+
+## Backlog (no priorizado)
+
+Ideas evaluadas pero no agendadas todavía — se retoman según necesidad del cliente:
+- Recordatorios automáticos de vencimiento (WhatsApp/Email).
+- MercadoPago Checkout + webhook (hoy `mercadopago` es solo una opción manual de medio de pago).
+- Exportar reportes (CSV/Excel): ingresos, ocupación, morosidad, caja diaria.
+- Multi-sede (agregar `sede_id` a las tablas + selector en header).
+- Facturación AFIP (wsfe) — solo si el cliente lo pide o lo exige el contador.
+- App móvil / PWA — solo si el complejo usa tablets sin red estable en las canchas.

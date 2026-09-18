@@ -7,8 +7,8 @@ portal del socio**.
 Pensado para que lo use el staff (administración, recepción, cobranzas) desde el día de
 apertura, y crecer sin reescribir: la landing pública y MercadoPago vienen después.
 
-Plan por fases y estado: **[`ROADMAP.md`](ROADMAP.md)**. Modelo de datos y decisiones de
-arquitectura: **[`PROJECT.md`](PROJECT.md)**.
+Plan por fases, estado y backlog: **[`ROADMAP.md`](ROADMAP.md)**. Modelo de datos:
+**[`migrations/`](migrations/)** (única fuente de verdad, aplicado con `node-pg-migrate`).
 
 ---
 
@@ -19,7 +19,7 @@ arquitectura: **[`PROJECT.md`](PROJECT.md)**.
 | Frontend + Backend | Next.js 16 (App Router) + TypeScript, un solo repo |
 | Base de datos | PostgreSQL (Supabase) |
 | Acceso a datos | SQL directo con `pg` — **sin ORM**. `node-pg-migrate` para migraciones |
-| Auth | Supabase Auth (email/password) + Row Level Security |
+| Auth | Supabase Auth (email/password) |
 | Validación | Zod |
 | Deploy | Vercel (con Vercel Cron para las tareas diarias) |
 
@@ -181,8 +181,12 @@ Puesta a punto (ya hecha, queda como referencia):
 
 ## Seguridad
 
-- Todas las tablas tienen **RLS activada** sin policies: la app entra como el rol
-  `postgres` (que saltea RLS), y cualquier acceso con la anon key contra la API de
-  Supabase queda denegado.
-- Cada Server Action verifica el rol antes de mutar (`staffPuede([...])`).
-- `proxy.ts` redirige a login antes de renderizar cualquier página del panel.
+- Todo el acceso a datos pasa por `pg` server-side con el rol `postgres` — no hay
+  ningún cliente Supabase corriendo en el navegador. La autorización se hace en capas
+  de aplicación, no en RLS.
+- Cada página del panel llama a `requireStaff(roles)` (`lib/auth.ts`) y cada Server
+  Action / Route Handler que toca datos sensibles vuelve a verificar la sesión y el
+  rol ahí mismo (`staffPuede([...])` / `requireStaff([...])`) — no solo en `proxy.ts`.
+- `proxy.ts` redirige a login antes de renderizar cualquier página protegida (defensa
+  en profundidad, no el único chequeo).
+- Headers de seguridad (CSP, `X-Frame-Options`, etc.) en `next.config.ts`.
