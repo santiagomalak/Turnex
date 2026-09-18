@@ -48,7 +48,7 @@ export async function cancelarReservaAction(id: string): Promise<ActionResult> {
     revalidar()
     return ok()
   } catch (err) {
-    if (err instanceof Error) return fail(err.message)
+    if (err instanceof Error && !(err as { code?: string }).code) return fail(err.message)
     return fromDbError(err)
   }
 }

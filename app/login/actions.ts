@@ -25,7 +25,8 @@ export async function loginAction(
     return fail('Esta cuenta no tiene acceso al panel de gestión')
   }
 
-  redirect(next && next.startsWith('/') && !next.startsWith('/login') ? next : '/dashboard')
+  const isSafeNext = next.startsWith('/') && !next.startsWith('//') && !next.startsWith('/\\') && !next.startsWith('/login')
+  redirect(isSafeNext ? next : '/dashboard')
 }
 
 export async function logoutAction(): Promise<void> {

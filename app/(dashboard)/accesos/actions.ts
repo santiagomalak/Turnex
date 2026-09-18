@@ -7,7 +7,7 @@ import {
   registrarSalida,
   type ResultadoBusqueda,
 } from '@/lib/services/acceso'
-import { ok, fail, type ActionResult } from '@/lib/action-result'
+import { ok, fail, fromDbError, type ActionResult } from '@/lib/action-result'
 import { staffPuede } from '@/lib/auth'
 
 const ROLES = ['admin', 'recepcion'] as const
@@ -27,7 +27,8 @@ export async function entradaAction(personaId: string): Promise<ActionResult> {
     revalidatePath('/dashboard')
     return ok()
   } catch (err) {
-    return fail(err instanceof Error ? err.message : 'Error al registrar la entrada')
+    if (err instanceof Error && !(err as { code?: string }).code) return fail(err.message)
+    return fromDbError(err)
   }
 }
 
@@ -40,6 +41,7 @@ export async function salidaAction(personaId: string): Promise<ActionResult> {
     revalidatePath('/dashboard')
     return ok()
   } catch (err) {
-    return fail(err instanceof Error ? err.message : 'Error al registrar la salida')
+    if (err instanceof Error && !(err as { code?: string }).code) return fail(err.message)
+    return fromDbError(err)
   }
 }

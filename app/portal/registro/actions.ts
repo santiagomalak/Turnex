@@ -3,7 +3,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { parseRegistroSocio, registrarSolicitudSocio } from '@/lib/services/socio'
-import { fail, fromZodError, type ActionResult } from '@/lib/action-result'
+import { fail, fromDbError, fromZodError, type ActionResult } from '@/lib/action-result'
 
 export async function registroSocioAction(
   _prev: ActionResult | null,
@@ -22,7 +22,8 @@ export async function registroSocioAction(
   try {
     await registrarSolicitudSocio(parsed.data)
   } catch (err) {
-    return fail(err instanceof Error ? err.message : 'No se pudo completar el registro')
+    if (err instanceof Error && !(err as { code?: string }).code) return fail(err.message)
+    return fromDbError(err)
   }
 
   // Ya queda logueado; el portal muestra "pendiente de aprobación".

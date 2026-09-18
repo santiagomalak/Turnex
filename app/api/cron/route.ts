@@ -1,5 +1,13 @@
 import { NextResponse } from 'next/server'
+import { timingSafeEqual } from 'crypto'
 import { correrTareasProgramadas } from '@/lib/services/tareas-programadas'
+
+function tokensMatch(a: string, b: string): boolean {
+  const bufA = Buffer.from(a)
+  const bufB = Buffer.from(b)
+  if (bufA.length !== bufB.length) return false
+  return timingSafeEqual(bufA, bufB)
+}
 
 // Endpoint que dispara Vercel Cron (config en vercel.json) una vez por día.
 // Se protege con CRON_SECRET: Vercel manda `Authorization: Bearer <CRON_SECRET>`.
@@ -8,7 +16,8 @@ export async function GET(request: Request) {
   if (!secret) {
     return NextResponse.json({ error: 'CRON_SECRET no configurado' }, { status: 500 })
   }
-  if (request.headers.get('authorization') !== `Bearer ${secret}`) {
+  const authHeader = request.headers.get('authorization') ?? ''
+  if (!tokensMatch(authHeader, `Bearer ${secret}`)) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 
