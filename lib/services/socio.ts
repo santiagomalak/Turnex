@@ -40,6 +40,11 @@ export async function registrarSolicitudSocio(
   if (existente?.auth_user_id) {
     throw new Error('Ya hay una cuenta con ese DNI. Si es tuya, iniciá sesión.')
   }
+  if (existente && (existente.email ?? '').trim().toLowerCase() !== data.email.trim().toLowerCase()) {
+    throw new Error(
+      'Ya hay una persona registrada con ese DNI pero con otro email. Contactá a recepción para vincular tu cuenta.'
+    )
+  }
 
   const admin = createAdminClient()
   const { data: created, error } = await admin.auth.admin.createUser({

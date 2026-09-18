@@ -42,6 +42,8 @@ export async function middleware(request: NextRequest) {
       request.nextUrl.pathname.startsWith('/caja') ||
       request.nextUrl.pathname.startsWith('/abonos') ||
       request.nextUrl.pathname.startsWith('/planes') ||
+      request.nextUrl.pathname.startsWith('/carnets') ||
+      request.nextUrl.pathname.startsWith('/socios-pendientes') ||
       request.nextUrl.pathname.startsWith('/kiosco')) {
     if (!user) {
       const url = request.nextUrl.clone()

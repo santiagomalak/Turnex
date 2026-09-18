@@ -1,29 +1,24 @@
-import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
 import QRCode from 'qrcode'
+import { requireStaff } from '@/lib/auth'
+import { obtenerPersona } from '@/lib/services/persona'
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  await requireStaff(['admin', 'recepcion'])
+
   try {
     const { id } = await params
-    const supabase = await createClient()
+    const persona = await obtenerPersona(id)
 
-    const { data: persona, error } = await supabase
-      .from('persona')
-      .select('*')
-      .eq('id', id)
-      .single()
-
-    if (error || !persona) {
+    if (!persona) {
       return NextResponse.json({ error: 'Socio no encontrado' }, { status: 404 })
     }
 
-    // Generar QR con el DNI
-    const qrData = persona.dni || `TURNE-${persona.id.slice(0, 8).toUpperCase()}`
-    const qrCodeDataUrl = await QRCode.toDataURL(qrData, {
+    const qrCodeDataUrl = await QRCode.toDataURL(persona.qr_token, {
       width: 200,
       margin: 2,
       errorCorrectionLevel: 'M',
@@ -129,7 +124,7 @@ export async function GET(
     yPos -= lineHeight
 
     // Estado
-    const estadoColor = persona.estado === 'activo' ? rgb(0.1, 0.6, 0.2) : 
+    const estadoColor = persona.estado === 'activo' ? rgb(0.1, 0.6, 0.2) :
                         persona.estado === 'moroso' ? rgb(0.8, 0.2, 0.2) : rgb(0.5, 0.5, 0.5)
     page.drawText(`Estado: ${persona.estado}`, {
       x: leftMargin,
@@ -142,7 +137,7 @@ export async function GET(
 
     // Email / Teléfono
     if (persona.email) {
-      page.drawText(`📧 ${persona.email}`, {
+      page.drawText(`Email: ${persona.email}`, {
         x: leftMargin,
         y: yPos,
         size: 8,
@@ -152,7 +147,7 @@ export async function GET(
       yPos -= lineHeight - 2
     }
     if (persona.telefono) {
-      page.drawText(`📞 ${persona.telefono}`, {
+      page.drawText(`Tel: ${persona.telefono}`, {
         x: leftMargin,
         y: yPos,
         size: 8,
