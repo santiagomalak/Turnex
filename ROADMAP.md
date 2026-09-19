@@ -54,8 +54,15 @@ Las 4 fases están en `main`:
   checkbox de `/carnets` se destildaba solo por un doble handler (fila +
   checkbox) en el mismo click.
 
-Pendiente, no relevado en la auditoría original: tests unitarios (Vitest) para
-la lógica de precios/cobros/caja — hoy solo hay cobertura E2E.
+**Tests unitarios (2026-09-18, post-auditoría):** `npm test` (Vitest) —
+`calcularPrecio`, validación de `reservaSchema`, `periodoActual`/`sumarDias`,
+`hoyArgentina` (con caso de borde 21:00-23:59 AR simulado), y un test de
+integración contra la base real para la imputación automática de pagos
+(parcial, sobrante a favor, monto inválido). De paso se encontró y arregló
+otro caso del bug de zona horaria: `periodoActual()` usaba `new Date()` local
+en vez de `hoyArgentina()`, con el mismo corrimiento pero a nivel mensual
+(el último día del mes, 21:00-23:59 AR). No corre en CI todavía (los tests de
+integración necesitan `DATABASE_URL` real) — se saltan solos si no está.
 
 ### Fase 0 — Fundaciones (sin features nuevas visibles)
 - `lib/db.ts` endurecido (SSL, pool acotado, helper de transacción).

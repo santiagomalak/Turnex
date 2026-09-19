@@ -124,6 +124,8 @@ npm run dev             # http://localhost:3000
 | `npm run dev` | Servidor de desarrollo |
 | `npm run build` / `npm start` | Build de producción / correrlo |
 | `npm run lint` | ESLint |
+| `npm test` | Tests unitarios (Vitest) — precios, cuenta corriente, fechas |
+| `npx playwright test` | Tests E2E (Playwright) — requiere `npm run seed` primero |
 | `npm run migrate:up` / `migrate:down` | Aplicar / revertir migraciones |
 | `npm run migrate:create -- <nombre>` | Nueva migración SQL |
 | `npm run seed` | Reset a un estado de demo coherente (idempotente) |

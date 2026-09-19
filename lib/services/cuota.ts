@@ -4,16 +4,16 @@ import { tx } from '@/lib/db'
 import * as cuotaRepo from '@/lib/repos/cuota'
 import * as mov from '@/lib/repos/movimiento'
 import { getConfigNumber } from '@/lib/config'
+import { hoyArgentina } from '@/lib/format'
 
 export const listarCuotas = cuotaRepo.listCuotas
 export const marcarCuotasVencidas = cuotaRepo.marcarVencidas
 
 type Db = Pick<PoolClient, 'query'>
 
-/** Primer día del mes actual como 'YYYY-MM-01'. */
+/** Primer día del mes actual (hora Argentina) como 'YYYY-MM-01'. */
 export function periodoActual(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+  return `${hoyArgentina().slice(0, 7)}-01`
 }
 
 export function sumarDias(iso: string, dias: number): string {
