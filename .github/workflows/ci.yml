@@ -41,6 +41,5 @@ jobs:
 # El deploy a Vercel NO pasa por acá: la integración nativa de Vercel
 # (conectada directo al repo de GitHub) hace auto-deploy de producción en cada
 # push a `main` y un preview en cada PR, sin necesidad de este workflow.
-# E2E (Playwright) tampoco corre en CI todavía: los specs en tests/ están
-# desactualizados (ver ROADMAP.md, Fase 4) — correrlos localmente con
-# `npx playwright test` hasta que se arreglen.
+# E2E (Playwright) tampoco corre en CI todavía — correrlos localmente con
+# `npx playwright test`.

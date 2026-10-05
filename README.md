@@ -7,8 +7,8 @@ portal del socio**.
 Pensado para que lo use el staff (administración, recepción, cobranzas) desde el día de
 apertura, y crecer sin reescribir: la landing pública y MercadoPago vienen después.
 
-Plan por fases, estado y backlog: **[`ROADMAP.md`](ROADMAP.md)**. Modelo de datos:
-**[`migrations/`](migrations/)** (única fuente de verdad, aplicado con `node-pg-migrate`).
+Modelo de datos: **[`migrations/`](migrations/)** (única fuente de verdad, aplicado con
+`node-pg-migrate`).
 
 ---
 
@@ -154,30 +154,9 @@ curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron
 
 ## Deploy en Vercel
 
-**En producción**: <https://turnex-gold.vercel.app> — auto-deploy en cada push a `main`.
-
-Puesta a punto (ya hecha, queda como referencia):
-
-1. **`DATABASE_URL` con el Session Pooler.** Vercel es IPv4-only y la conexión
-   directa de Supabase (`db.<ref>.supabase.co`) es IPv6-only → hay que usar el pooler
-   (`aws-0-sa-east-1.pooler.supabase.com:5432`, usuario `postgres.<ref>`).
-   `bash scripts/usar-pooler.sh` hace el cambio en `.env.local` y en Vercel.
-
-2. **El resto de las variables de entorno** (`NEXT_PUBLIC_SUPABASE_URL`,
-   `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SECRET_KEY`, `CRON_SECRET`) cargadas en
-   los tres entornos (Production, Preview, Development).
-
-3. **Deployment Protection** — Settings → Deployment Protection → apagar el toggle
-   "Require Log In" de *Vercel Authentication*.
-
-4. **`btree_gist` en el schema `extensions`** (migración `move-btree-gist-a-extensions`).
-
-5. **Pendiente (1 clic del dueño)**: en Supabase → Authentication → Providers → Email,
-   activar **"Prevent use of leaked passwords"**.
-
-> Cuando el complejo confirme el acuerdo, la idea es crear un proyecto de Supabase
-> **nuevo y separado** para producción. Todo el esquema vive en `migrations/`, así que
-> migrar es correr `npm run migrate:up` contra la base nueva.
+Auto-deploy en cada push a `main`. Variables de entorno necesarias (las mismas de
+`.env.local`) en Production, Preview y Development. `DATABASE_URL` tiene que usar el
+**Session Pooler** de Supabase: Vercel es IPv4-only y la conexión directa es IPv6-only.
 
 ---
 

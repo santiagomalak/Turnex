@@ -40,9 +40,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# opencode / claude config (internal)
-CLAUDE.md
-AGENTS.md
+# notas internas / config de asistentes (solo el README se publica)
+*.md
+!/README.md
+*.txt
+.claude/
 
 # playwright
 /test-results/
